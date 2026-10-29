@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- fullstack-lab の認証・認可（Keycloak、oauth2-proxy、Nginx、BFF、認可 API、認証 API）を図解する単体の HTML。
+     外部に依存するのは Google Fonts だけで、読めなくても代替フォントで表示できる。 -->
+<title>fullstack-lab 認証・認可の図解</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* レイアウト: 1 カラム。本文は 40 文字幅、図は 960px の枠いっぱい。上部に固定の「誰で見るか」切り替え */
+:root {
+  --bg: #f4f5f8;
+  --surface: #ffffff;
+  --surface-2: #eceef4;
+  --fg: #1c2232;
+  --muted: #5d6679;
+  --line: #d5d9e3;
+  --accent: #2d49cf;
+  --c: #0f8777;        /* 一般利用者の経路 */
+  --c-soft: rgba(15, 135, 119, 0.12);
+  --s: #7446d4;        /* 社員の経路 */
+  --s-soft: rgba(116, 70, 212, 0.12);
+  --jwt: #a8650a;      /* トークン */
+  --jwt-soft: rgba(168, 101, 10, 0.14);
+  --k: #b4471d;        /* Keycloak */
+  --k-soft: rgba(180, 71, 29, 0.10);
+  --z: #1f5fa8;        /* 認可 API */
+  --au: #5b6b1f;       /* 認証 API */
+  --ok: #1e8a4c;
+  --ok-soft: rgba(30, 138, 76, 0.12);
+  --ng: #bf3b3b;
+  --ng-soft: rgba(191, 59, 59, 0.12);
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-display: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161f; --surface: #1a1f2b; --surface-2: #222838; --fg: #e5e8ef; --muted: #9aa3b6; --line: #2e3647;
+    --accent: #8ea0ff; --c: #3cc2ad; --c-soft: rgba(60, 194, 173, 0.16); --s: #b393ff; --s-soft: rgba(179, 147, 255, 0.16);
+    --jwt: #e3a942; --jwt-soft: rgba(227, 169, 66, 0.16); --k: #ee8a5a; --k-soft: rgba(238, 138, 90, 0.14);
+    --z: #6ea6ea; --au: #a9bd55; --ok: #4fc47c; --ok-soft: rgba(79, 196, 124, 0.16); --ng: #f27b7b; --ng-soft: rgba(242, 123, 123, 0.16);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161f; --surface: #1a1f2b; --surface-2: #222838; --fg: #e5e8ef; --muted: #9aa3b6; --line: #2e3647;
+  --accent: #8ea0ff; --c: #3cc2ad; --c-soft: rgba(60, 194, 173, 0.16); --s: #b393ff; --s-soft: rgba(179, 147, 255, 0.16);
+  --jwt: #e3a942; --jwt-soft: rgba(227, 169, 66, 0.16); --k: #ee8a5a; --k-soft: rgba(238, 138, 90, 0.14);
+  --z: #6ea6ea; --au: #a9bd55; --ok: #4fc47c; --ok-soft: rgba(79, 196, 124, 0.16); --ng: #f27b7b; --ng-soft: rgba(242, 123, 123, 0.16);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+img, svg { max-width: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.85; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 960px; margin: 0 auto; padding-block: 0 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--surface-2); padding: 0.08em 0.38em; border-radius: 4px; word-break: break-all; }
+pre { background: var(--surface-2); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; margin: 0; }
+pre code { background: none; padding: 0; font-size: inherit; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4.6vw, 40px); margin: 28px 0 10px; letter-spacing: 0.01em; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(21px, 3vw, 27px); margin: 0 0 14px; padding-top: 56px; }
+h2 .no { font-family: var(--font-mono); font-size: 0.6em; color: var(--muted); margin-right: 12px; vertical-align: 0.15em; letter-spacing: 0.04em; }
+h3 { font-size: 17px; font-weight: 700; margin: 30px 0 8px; }
+p { margin: 0 0 14px; max-width: 42em; }
+.lead { font-size: 17px; max-width: 42em; }
+ul.plain { padding-left: 1.3em; max-width: 44em; }
+ul.plain li { margin-bottom: 6px; }
+strong { font-weight: 700; }
+.muted { color: var(--muted); }
+
+/* 上部バー: 誰で見るか */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))) 0 calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-block: 10px; }
+.bar .label { font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em; }
+.persona { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); gap: 3px; }
+.persona button { font: inherit; font-size: 13.5px; font-weight: 500; padding: 5px 14px; border-radius: 999px; border: 0; background: transparent; color: var(--fg); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.persona button .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.persona button[data-persona="c"] .dot { background: var(--c); }
+.persona button[data-persona="s"] .dot { background: var(--s); }
+.persona button[aria-pressed="true"] { background: var(--surface-2); font-weight: 700; }
+.persona button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.v { font-weight: 700; }
+.v.mono { font-family: var(--font-mono); font-size: 0.9em; font-weight: 500; }
+:root:not([data-persona]) .only-s, :root[data-persona="c"] .only-s { display: none; }
+:root[data-persona="s"] .only-c { display: none; }
+:root[data-persona="s"] .v { color: var(--s); }
+:root:not([data-persona]) .v, :root[data-persona="c"] .v { color: var(--c); }
+
+/* 目次 */
+nav.toc { margin: 22px 0 8px; }
+nav.toc ol { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 20px; padding: 0; margin: 0; list-style: none; counter-reset: toc; }
+nav.toc li { counter-increment: toc; font-size: 14px; }
+nav.toc li::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-mono); color: var(--muted); font-size: 12px; margin-right: 10px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+
+/* 図 */
+figure { margin: 18px 0 8px; }
+.fig-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px; }
+.fig-scroll svg { display: block; max-width: 100%; height: auto; }
+.fig-scroll svg.seq { min-width: 760px; }
+.fig-scroll svg.arch { min-width: 720px; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 10px; max-width: 60em; }
+svg text { fill: currentColor; font-family: var(--font-body); }
+svg .mono { font-family: var(--font-mono); }
+svg .mk { fill: currentColor; }
+svg .mk-jwt { fill: var(--jwt); }
+svg .mk-ok { fill: var(--ok); }
+svg .mk-ng { fill: var(--ng); }
+svg .life { stroke: currentColor; stroke-opacity: 0.22; stroke-width: 1; stroke-dasharray: 2 4; }
+svg .pbox { fill: var(--surface); stroke: currentColor; stroke-width: 1.3; }
+svg .pbox.lane-p { stroke: var(--c); }
+svg .pbox.lane-k { stroke: var(--k); fill: var(--k-soft); }
+svg .pbox.lane-z { stroke: var(--z); }
+svg .pbox.lane-au { stroke: var(--au); }
+svg .msg { stroke: currentColor; stroke-width: 1.5; }
+svg .msg.ret { stroke-dasharray: 5 4; }
+svg .msg.ln-jwt { stroke: var(--jwt); }
+svg .msg.ln-k { stroke: var(--k); }
+svg .msg.ln-z { stroke: var(--z); }
+svg .msg.ln-au { stroke: var(--au); }
+svg .msg.ln-ok { stroke: var(--ok); }
+svg .msg.ln-ng { stroke: var(--ng); }
+svg .msglabel { font-size: 12px; }
+svg .note { fill: var(--surface); stroke: var(--jwt); stroke-width: 1.2; }
+svg .notetext { font-size: 11px; font-weight: 700; }
+svg .band { fill: currentColor; fill-opacity: 0.045; }
+svg .band.band-ok { fill: var(--ok); fill-opacity: 0.09; }
+svg .band.band-ng { fill: var(--ng); fill-opacity: 0.09; }
+svg .phase { fill: var(--muted); }
+svg .box { fill: var(--surface); stroke: currentColor; stroke-width: 1.3; }
+svg .box.c { stroke: var(--c); fill: var(--c-soft); }
+svg .box.s { stroke: var(--s); fill: var(--s-soft); }
+svg .box.k { stroke: var(--k); fill: var(--k-soft); }
+svg .box.z { stroke: var(--z); }
+svg .box.au { stroke: var(--au); }
+svg .box.ghost { fill: none; stroke-dasharray: 4 4; stroke-opacity: 0.7; }
+svg .ln { stroke: currentColor; stroke-width: 1.5; fill: none; }
+svg .ln.c { stroke: var(--c); }
+svg .ln.s { stroke: var(--s); }
+svg .ln.k { stroke: var(--k); }
+svg .ln.jwt { stroke: var(--jwt); stroke-width: 2; }
+svg .ln.thin { stroke-opacity: 0.6; }
+svg .mk-c { fill: var(--c); }
+svg .mk-s { fill: var(--s); }
+svg .mk-k { fill: var(--k); }
+svg .mk-z { fill: var(--z); }
+svg .mk-au { fill: var(--au); }
+svg .ln.z { stroke: var(--z); }
+svg .ln.au { stroke: var(--au); }
+svg .tz { fill: var(--z); }
+svg .tau { fill: var(--au); }
+svg .t11 { font-size: 11px; }
+svg .t12 { font-size: 12px; }
+svg .t13 { font-size: 13px; font-weight: 700; }
+svg .tm { fill: var(--muted); }
+svg .tc { fill: var(--c); }
+svg .ts { fill: var(--s); }
+svg .tk { fill: var(--k); }
+svg .tj { fill: var(--jwt); }
+svg .tok { fill: var(--ok); }
+svg .tng { fill: var(--ng); }
+svg .gate { fill: var(--surface); stroke: currentColor; stroke-width: 1.5; }
+svg .gate-shadow { fill: currentColor; fill-opacity: 0.06; }
+
+/* 手順の一覧 */
+ol.steps { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; max-width: 62em; }
+ol.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; font-size: 14.5px; line-height: 1.75; }
+ol.steps .num { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 表 */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+th { font-weight: 700; background: var(--surface-2); white-space: nowrap; font-size: 13px; letter-spacing: 0.02em; }
+tbody tr:last-child td { border-bottom: 0; }
+td.k { font-weight: 700; white-space: nowrap; }
+.ok { color: var(--ok); font-weight: 700; }
+.ng { color: var(--ng); font-weight: 700; }
+.chip { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; margin-right: 4px; }
+.chip.bff { border-color: var(--jwt); color: var(--jwt); }
+.chip.z { border-color: var(--z); color: var(--z); }
+.chip.n { border-color: currentColor; }
+.chip.k { border-color: var(--k); color: var(--k); }
+.chip.au { border-color: var(--au); color: var(--au); }
+.chip.c { border-color: var(--c); color: var(--c); }
+.chip.s { border-color: var(--s); color: var(--s); }
+tr.row-c, tr.row-s { transition: background 0.2s; }
+:root:not([data-persona]) tr.row-c, :root[data-persona="c"] tr.row-c { background: var(--c-soft); }
+:root[data-persona="s"] tr.row-s { background: var(--s-soft); }
+
+/* JWT カード */
+.jwt { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .jwt { grid-template-columns: 1fr; } }
+.jwt pre { font-size: 12.5px; }
+.jwt .hd { color: var(--k); }
+.jwt .pl { color: var(--jwt); }
+.jwt .sg { color: var(--accent); }
+.claims { display: grid; gap: 8px; }
+.claim { display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13.5px; line-height: 1.6; }
+.claim .cn { font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; word-break: break-all; }
+@media (max-width: 480px) { .claim { grid-template-columns: 1fr; } }
+
+/* 門のカード */
+.gates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+@media (max-width: 720px) { .gates { grid-template-columns: 1fr; } }
+.gate-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; font-size: 14px; line-height: 1.7; }
+.gate-card h3 { margin: 0 0 6px; font-size: 15.5px; }
+.gate-card .q { font-weight: 700; margin-bottom: 4px; }
+.gate-card .fail { color: var(--muted); font-size: 13px; }
+
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; max-width: 60em; font-size: 14.5px; }
+.callout p:last-child { margin-bottom: 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.two > div { min-width: 0; }
+.files { font-size: 14px; }
+.files li { margin-bottom: 4px; }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<div class="bar"><div class="bar-in">
+  <span class="label">誰としてたどるか（図と表の値が切り替わる）</span>
+  <div class="persona" role="group" aria-label="利用者の切り替え">
+    <button type="button" id="persona-c" data-persona="c" aria-pressed="true"><span class="dot"></span>alice（一般利用者）</button>
+    <button type="button" id="persona-s" data-persona="s" aria-pressed="false"><span class="dot"></span>dave（社員 task-admin）</button>
+  </div>
+</div></div>
+
+<h1>fullstack-lab 認証・認可の図解</h1>
+<p class="lead">Keycloak、oauth2-proxy、Nginx、BFF、認可 API、認証 API が、1 回のログインと 1 回のリクエストの中でそれぞれ何をしているかを、このリポジトリの実際の設定値で追います。読み終わると「誰が認証し、誰が JWT を検証し、誰が可否を決めるか」を人に説明できます。</p>
+
+<nav class="toc"><ol>
+  <li><a href="#gates">結論: 3 つの門</a></li>
+  <li><a href="#cast">登場人物と役割</a></li>
+  <li><a href="#keycloak">Keycloak の中身</a></li>
+  <li><a href="#login">ログインの流れ</a></li>
+  <li><a href="#jwt">JWT の中身と、誰がどこを見るか</a></li>
+  <li><a href="#authz">認可の流れ</a></li>
+  <li><a href="#hosts">2 つのホスト、2 つの realm</a></li>
+  <li><a href="#signup">会員登録とパスワード変更</a></li>
+  <li><a href="#aws">ローカルと AWS の対応</a></li>
+  <li><a href="#read">確かめ方と読む場所</a></li>
+</ol></nav>
+
+<!-- ======================================================================= -->
+<h2 id="gates"><span class="no">01</span>結論: リクエストは 3 つの門を通る</h2>
+<p>「認証」と「認可」は別の仕事で、このリポジトリでは別のコンポーネントが受け持ちます。守りは 3 段で、画面のボタンの出し分けは守りに含めません。</p>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 960 230" role="img" aria-label="リクエストが Nginx、BFF、認可 API の 3 つの門を順に通り、各門で落ちると 302 か 401、401、403 か 404 が返る" class="arch" style="min-width:640px">
+  <defs>
+    <marker id="arr-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
+    <marker id="arr-g-ng" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-ng"/></marker>
+  </defs>
+  <rect x="16" y="78" width="96" height="44" rx="8" class="box"/>
+  <text x="64" y="105" text-anchor="middle" class="t13">ブラウザ</text>
+  <line x1="112" y1="100" x2="186" y2="100" class="ln" marker-end="url(#arr-g)"/>
+  <text x="149" y="92" text-anchor="middle" class="t11 tm">Cookie</text>
+
+  <rect x="190" y="52" width="170" height="96" rx="10" class="gate-shadow" transform="translate(4,4)"/>
+  <rect x="190" y="52" width="170" height="96" rx="10" class="gate"/>
+  <text x="275" y="76" text-anchor="middle" class="t11 tm">門 1 ・ 認証（セッション）</text>
+  <text x="275" y="98" text-anchor="middle" class="t13">Nginx + oauth2-proxy</text>
+  <text x="275" y="118" text-anchor="middle" class="t12">ログイン済みか？</text>
+  <text x="275" y="136" text-anchor="middle" class="t11 tm">Cookie を復号できるか</text>
+  <line x1="275" y1="148" x2="275" y2="186" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
+  <text x="275" y="210" text-anchor="middle" class="t12 tng">302 ログイン画面へ / 401</text>
+
+  <line x1="360" y1="100" x2="452" y2="100" class="ln jwt" marker-end="url(#arr-g)"/>
+  <text x="406" y="88" text-anchor="middle" class="t11 tj">JWT を付けて</text>
+
+  <rect x="456" y="52" width="170" height="96" rx="10" class="gate-shadow" transform="translate(4,4)"/>
+  <rect x="456" y="52" width="170" height="96" rx="10" class="gate"/>
+  <text x="541" y="76" text-anchor="middle" class="t11 tm">門 2 ・ トークンの検証</text>
+  <text x="541" y="98" text-anchor="middle" class="t13">BFF（Spring Security）</text>
+  <text x="541" y="118" text-anchor="middle" class="t12">その JWT は本物か？</text>
+  <text x="541" y="136" text-anchor="middle" class="t11 tm">署名・iss・aud・exp</text>
+  <line x1="541" y1="148" x2="541" y2="186" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
+  <text x="541" y="210" text-anchor="middle" class="t12 tng">401</text>
+
+  <line x1="626" y1="100" x2="718" y2="100" class="ln" marker-end="url(#arr-g)"/>
+  <text x="672" y="88" text-anchor="middle" class="t11 tm">主体・操作・対象</text>
+
+  <rect x="722" y="52" width="170" height="96" rx="10" class="gate-shadow" transform="translate(4,4)"/>
+  <rect x="722" y="52" width="170" height="96" rx="10" class="gate"/>
+  <text x="807" y="76" text-anchor="middle" class="t11 tm">門 3 ・ 認可</text>
+  <text x="807" y="98" text-anchor="middle" class="t13">認可 API（Policy.kt）</text>
+  <text x="807" y="118" text-anchor="middle" class="t12">この操作をしてよいか？</text>
+  <text x="807" y="136" text-anchor="middle" class="t11 tm">種別・ロール・所有者</text>
+  <line x1="807" y1="148" x2="807" y2="186" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
+  <text x="807" y="210" text-anchor="middle" class="t12 tng">403 / 404（存在を隠す）</text>
+
+  <line x1="892" y1="100" x2="944" y2="100" class="ln" style="stroke:var(--ok)" marker-end="url(#arr-g)"/>
+  <text x="918" y="88" text-anchor="middle" class="t11 tok">API へ</text>
+</svg>
+</div>
+<figcaption>門 1 は「誰か」を確かめ、門 2 はその証明書（JWT）が偽造されていないかを確かめ、門 3 は「その人がこの操作をしてよいか」を決める。Keycloak は門 1 の裏でパスワードを確認し、JWT を発行する役。</figcaption>
+</figure>
+
+<div class="gates">
+  <div class="gate-card"><h3>門 1 ・ Nginx + oauth2-proxy</h3>
+    <div class="q">ログイン済みか？</div>
+    Nginx は転送する前に <code>auth_request</code> で oauth2-proxy に Cookie を見せる。oauth2-proxy が Cookie を復号できれば 202 と JWT を返し、できなければ 401。AWS では ALB の認証アクションがこの門。
+    <div class="fail">落ちると: 画面は 302 でログイン画面へ、<code>/bff/*</code> は 401 の JSON</div></div>
+  <div class="gate-card"><h3>門 2 ・ BFF</h3>
+    <div class="q">その JWT は本物か？</div>
+    前段を信じ切らず、Keycloak の公開鍵で署名を検証し、<code>iss</code>・<code>aud</code>・<code>exp</code> を確かめる。知らない発行元は拒否。通ったら <code>CurrentUser</code>（sub、種別、ロール）を組み立てる。
+    <div class="fail">落ちると: 401。スモークテストは偽の JWT を BFF に直接送って 401 を確認している</div></div>
+  <div class="gate-card"><h3>門 3 ・ 認可 API</h3>
+    <div class="q">この操作をしてよいか？</div>
+    BFF が主体（sub、種別、ロール）・操作（<code>task:read</code> など）・対象（所有者）を送り、<code>allowed</code> と理由を受け取る。既定で拒否。認可 API が落ちたら 503 で拒否（fail-closed）。
+    <div class="fail">落ちると: 登録は 403、他人の詳細は 404（存在を知らせない）</div></div>
+</div>
+
+<!-- ======================================================================= -->
+<h2 id="cast"><span class="no">02</span>登場人物と役割</h2>
+<p>Keycloak は「ユーザーを預かり、パスワードを確認し、JWT を発行する」役だけです。ログイン画面へ飛ばしたり Cookie を持ったりはせず、それは oauth2-proxy の仕事。JWT を検証するのは BFF、可否を決めるのは認可 API。同じ Nuxt と BFF を一般利用者と社員で共有し、入口のホスト名でだけ経路が分かれます。</p>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 1180 580" role="img" aria-label="ブラウザ、Nginx、2 つの oauth2-proxy、Nuxt、BFF、認可 API、API、認証 API、2 つの realm を持つ Keycloak の接続関係" class="arch">
+  <defs>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
+    <marker id="arr-a-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-c"/></marker>
+    <marker id="arr-a-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-s"/></marker>
+    <marker id="arr-a-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-k"/></marker>
+    <marker id="arr-a-j" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker>
+    <marker id="arr-a-z" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-z"/></marker>
+    <marker id="arr-a-au" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-au"/></marker>
+  </defs>
+
+  <!-- ブラウザ → Keycloak のログイン画面（上を回る） -->
+  <polyline points="75,330 75,18 995,18 995,26" class="ln k thin" marker-end="url(#arr-a-k)"/>
+  <text x="535" y="12" text-anchor="middle" class="t11 tk">ログイン画面の表示とパスワード入力（ブラウザは http://localhost:8180 へ直接）</text>
+
+  <!-- ブラウザ -->
+  <rect x="20" y="330" width="110" height="60" rx="8" class="box"/>
+  <text x="75" y="356" text-anchor="middle" class="t13">ブラウザ</text>
+  <text x="75" y="374" text-anchor="middle" class="t11 tm">暗号化 Cookie を持つ</text>
+  <line x1="130" y1="360" x2="176" y2="360" class="ln" marker-end="url(#arr-a)"/>
+
+  <!-- Nginx -->
+  <rect x="180" y="110" width="130" height="460" rx="10" class="box"/>
+  <text x="245" y="130" text-anchor="middle" class="t13">Nginx</text>
+  <text x="245" y="144" text-anchor="middle" class="t11 tm">ALB の代替</text>
+  <rect x="190" y="150" width="110" height="52" rx="6" class="box c"/>
+  <text x="245" y="171" text-anchor="middle" class="t12 mono">localhost</text>
+  <text x="245" y="188" text-anchor="middle" class="t11 tc">一般利用者</text>
+  <text x="245" y="246" text-anchor="middle" class="t11 tm">auth_request で</text>
+  <text x="245" y="262" text-anchor="middle" class="t11 tm">セッション確認</text>
+  <text x="245" y="286" text-anchor="middle" class="t11 tm">X-Amzn-Oidc-* を</text>
+  <text x="245" y="302" text-anchor="middle" class="t11 tm">必ず上書き</text>
+  <rect x="190" y="500" width="110" height="52" rx="6" class="box s"/>
+  <text x="245" y="521" text-anchor="middle" class="t11 mono">admin.localhost</text>
+  <text x="245" y="538" text-anchor="middle" class="t11 ts">社員</text>
+
+  <!-- 一般利用者の経路 -->
+  <line x1="300" y1="176" x2="396" y2="176" class="ln c" marker-end="url(#arr-a-c)"/>
+  <text x="348" y="168" text-anchor="middle" class="t11 tc">auth_request</text>
+  <rect x="400" y="150" width="160" height="52" rx="8" class="box c"/>
+  <text x="480" y="171" text-anchor="middle" class="t12 mono">oauth2-proxy-customer</text>
+  <text x="480" y="188" text-anchor="middle" class="t11 tc">Cookie _fsl_customer</text>
+  <line x1="560" y1="176" x2="816" y2="176" class="ln c" marker-end="url(#arr-a-c)"/>
+  <text x="688" y="156" text-anchor="middle" class="t11 tc">code をトークンと交換</text>
+  <text x="688" y="170" text-anchor="middle" class="t11 tc">公開鍵の取得（keycloak:8080）</text>
+
+  <!-- 社員の経路 -->
+  <line x1="300" y1="526" x2="396" y2="526" class="ln s" marker-end="url(#arr-a-s)"/>
+  <text x="348" y="518" text-anchor="middle" class="t11 ts">auth_request</text>
+  <rect x="400" y="500" width="160" height="52" rx="8" class="box s"/>
+  <text x="480" y="521" text-anchor="middle" class="t12 mono">oauth2-proxy-staff</text>
+  <text x="480" y="538" text-anchor="middle" class="t11 ts">Cookie _fsl_staff</text>
+  <polyline points="560,526 1080,526 1080,270" class="ln s" marker-end="url(#arr-a-s)"/>
+  <text x="800" y="506" text-anchor="middle" class="t11 ts">code をトークンと交換</text>
+  <text x="800" y="520" text-anchor="middle" class="t11 ts">公開鍵の取得（keycloak:8080）</text>
+
+  <!-- Nginx → BFF（JWT） -->
+  <line x1="310" y1="352" x2="536" y2="352" class="ln jwt" marker-end="url(#arr-a-j)"/>
+  <text x="423" y="344" text-anchor="middle" class="t11 tj">x-amzn-oidc-accesstoken: JWT</text>
+
+  <!-- Nginx → Nuxt -->
+  <line x1="310" y1="456" x2="396" y2="456" class="ln" marker-end="url(#arr-a)"/>
+  <text x="353" y="448" text-anchor="middle" class="t11 tm">画面</text>
+  <rect x="400" y="430" width="160" height="52" rx="8" class="box"/>
+  <text x="480" y="451" text-anchor="middle" class="t13">Nuxt（SSR）</text>
+  <text x="480" y="468" text-anchor="middle" class="t11 tm">JWT をそのまま転送</text>
+  <line x1="560" y1="442" x2="596" y2="388" class="ln jwt" marker-end="url(#arr-a-j)"/>
+  <text x="604" y="420" text-anchor="start" class="t11 tj">SSR 中は直接 bff:8080</text>
+
+  <!-- BFF -->
+  <rect x="540" y="320" width="150" height="64" rx="8" class="box"/>
+  <text x="615" y="342" text-anchor="middle" class="t13">BFF</text>
+  <text x="615" y="359" text-anchor="middle" class="t11 tj">JWT を検証（門 2）</text>
+  <text x="615" y="374" text-anchor="middle" class="t11 tm">CurrentUser を作る</text>
+
+  <!-- BFF → 公開鍵 -->
+  <polyline points="615,320 615,292 850,292 850,270" class="ln k thin" marker-end="url(#arr-a-k)"/>
+  <text x="745" y="284" text-anchor="middle" class="t11 tk">公開鍵（JWKS）を取得。realm ごと、初回だけ</text>
+
+  <!-- BFF → 内部 API 群 -->
+  <line x1="690" y1="352" x2="716" y2="352" class="ln"/>
+  <line x1="716" y1="342" x2="716" y2="434" class="ln"/>
+  <line x1="716" y1="342" x2="816" y2="342" class="ln z" marker-end="url(#arr-a-z)"/>
+  <text x="766" y="334" text-anchor="middle" class="t11 tz">可否を問う</text>
+  <line x1="716" y1="388" x2="816" y2="388" class="ln" marker-end="url(#arr-a)"/>
+  <text x="766" y="380" text-anchor="middle" class="t11 tm">業務データ</text>
+  <line x1="716" y1="434" x2="816" y2="434" class="ln au" marker-end="url(#arr-a-au)"/>
+  <text x="766" y="426" text-anchor="middle" class="t11 tau">アカウント操作</text>
+
+  <rect x="820" y="320" width="140" height="44" rx="8" class="box z"/>
+  <text x="890" y="338" text-anchor="middle" class="t13">認可 API</text>
+  <text x="890" y="354" text-anchor="middle" class="t11 tm">判定だけ（門 3）</text>
+  <rect x="820" y="366" width="140" height="44" rx="8" class="box"/>
+  <text x="890" y="384" text-anchor="middle" class="t13">API</text>
+  <text x="890" y="400" text-anchor="middle" class="t11 tm">BFF を信頼。認可しない</text>
+  <rect x="820" y="412" width="140" height="44" rx="8" class="box au"/>
+  <text x="890" y="430" text-anchor="middle" class="t13">認証 API</text>
+  <text x="890" y="446" text-anchor="middle" class="t11 tm">Keycloak の代行</text>
+  <polyline points="960,434 975,434 975,270" class="ln k" marker-end="url(#arr-a-k)"/>
+  <text x="982" y="350" text-anchor="start" class="t11 tk">Admin REST API</text>
+  <text x="982" y="364" text-anchor="start" class="t11 tk">（SA のトークン）</text>
+
+  <!-- Keycloak -->
+  <rect x="820" y="30" width="350" height="236" rx="10" class="box k"/>
+  <text x="995" y="48" text-anchor="middle" class="t13">Keycloak</text>
+  <text x="995" y="61" text-anchor="middle" class="t11 tm">IdP。ユーザーと鍵を預かる</text>
+  <rect x="830" y="68" width="160" height="180" rx="6" class="box c"/>
+  <text x="910" y="86" text-anchor="middle" class="t12 mono">realm customer</text>
+  <text x="838" y="104" text-anchor="start" class="t11">users: alice, bob</text>
+  <text x="838" y="118" text-anchor="start" class="t11 tm">+ 会員登録した人</text>
+  <text x="838" y="136" text-anchor="start" class="t11">role: customer</text>
+  <text x="838" y="154" text-anchor="start" class="t11">client:</text>
+  <text x="838" y="168" text-anchor="start" class="t11 mono">fullstack-lab-customer</text>
+  <text x="838" y="182" text-anchor="start" class="t11 mono">auth-api（SA）</text>
+  <text x="838" y="200" text-anchor="start" class="t11">mapper: audience</text>
+  <text x="838" y="218" text-anchor="start" class="t11">署名鍵 RS256</text>
+  <text x="838" y="234" text-anchor="start" class="t11 tm">iss …/realms/customer</text>
+  <rect x="1000" y="68" width="160" height="180" rx="6" class="box s"/>
+  <text x="1080" y="86" text-anchor="middle" class="t12 mono">realm staff</text>
+  <text x="1080" y="100" text-anchor="middle" class="t11 ts">Okta の代替</text>
+  <text x="1008" y="118" text-anchor="start" class="t11">users: carol, dave</text>
+  <text x="1008" y="133" text-anchor="start" class="t11">group: task-viewer</text>
+  <text x="1008" y="148" text-anchor="start" class="t11">group: task-admin</text>
+  <text x="1008" y="166" text-anchor="start" class="t11">client:</text>
+  <text x="1008" y="180" text-anchor="start" class="t11 mono">fullstack-lab-staff</text>
+  <text x="1008" y="198" text-anchor="start" class="t11">mapper: audience, groups</text>
+  <text x="1008" y="216" text-anchor="start" class="t11">署名鍵 RS256</text>
+  <text x="1008" y="232" text-anchor="start" class="t11 tm">iss …/realms/staff</text>
+</svg>
+</div>
+<figcaption>緑の経路が一般利用者（localhost → oauth2-proxy-customer → realm customer）、紫が社員（admin.localhost → oauth2-proxy-staff → realm staff）。黄色の線が JWT の通り道。Keycloak には 2 つの realm があり、ユーザー・クライアント・署名鍵がそれぞれ別。認証 API だけが Keycloak の Admin API を叩く。</figcaption>
+</figure>
+
+<!-- ======================================================================= -->
+<h2 id="keycloak"><span class="no">03</span>Keycloak の中身</h2>
+<p>Keycloak の用語は多いですが、このリポジトリで使っているのは次の 12 個だけです。右の列がこのリポジトリでの具体名です。</p>
+
+<div class="tbl-wrap"><table>
+<thead><tr><th>用語</th><th>何か</th><th>このリポジトリでは</th></tr></thead>
+<tbody>
+<tr><td class="k">realm</td><td>ユーザー・クライアント・ロール・署名鍵・設定をまとめた、独立した区画。realm が違えばユーザーも鍵も別で、トークンの <code>iss</code> も realm ごとに変わる。</td><td><code>customer</code>（一般利用者。本番も Keycloak）と <code>staff</code>（Okta の代替）。定義は <code>auth/keycloak/import/customer-realm.json</code> と <code>keycloak/import/staff-realm.json</code></td></tr>
+<tr><td class="k">client</td><td>realm に登録した「ログインに使うアプリ」。redirect URI、シークレット、どのフローを許すかを持つ。</td><td><code>fullstack-lab-customer</code>（oauth2-proxy-customer が使う）、<code>fullstack-lab-staff</code>、<code>auth-api</code>（認証 API が使う）</td></tr>
+<tr><td class="k">client secret</td><td>confidential client がトークン交換のときに提示する秘密。</td><td><code>.env</code> の <code>CUSTOMER_CLIENT_SECRET</code> / <code>STAFF_CLIENT_SECRET</code> / <code>AUTH_API_CLIENT_SECRET</code>。realm JSON はプレースホルダーで受け取る</td></tr>
+<tr><td class="k">standard flow</td><td>認可コードフロー。ブラウザを Keycloak のログイン画面へ飛ばし、戻ってきたコードを裏側でトークンに交換する。PKCE はコードの横取り対策。</td><td>oauth2-proxy が実行する（<code>OAUTH2_PROXY_CODE_CHALLENGE_METHOD: S256</code>）。図 4</td></tr>
+<tr><td class="k">service account（client_credentials）</td><td>人ではなくアプリ自身がトークンを得る方式。ログイン画面は出ない。</td><td><code>auth-api</code> に有効。realm-management の <code>manage-users</code> / <code>view-users</code> / <code>view-realm</code> を持つ。図 8</td></tr>
+<tr><td class="k">realm role</td><td>realm 内で定義する役割。JWT の <code>realm_access.roles</code> に出る。</td><td><code>customer</code>。会員登録時に認証 API が付与する。BFF は読み取るが、一般利用者の認可には使わない（所有者で判定する）</td></tr>
+<tr><td class="k">group</td><td>ユーザーの集まり。Okta の「グループ」に相当。</td><td>realm staff の <code>task-viewer</code>（carol）と <code>task-admin</code>（dave）。認可 API の <code>staff-role-permissions</code> のキーと一致させる</td></tr>
+<tr><td class="k">protocol mapper</td><td>トークンにどのクレームを、どの名前で入れるかの定義。</td><td><code>audience</code>（<code>aud</code> に client ID を入れる。BFF の aud 検証用）、<code>groups (Okta 互換)</code>（グループ名を <code>groups</code> に入れる。<code>full.path=false</code> なので <code>task-admin</code> と出る）</td></tr>
+<tr><td class="k">署名鍵 / JWKS</td><td>realm ごとの鍵ペア。秘密鍵で JWT に署名し、公開鍵を <code>/protocol/openid-connect/certs</code> で配る。</td><td>BFF（<code>jwk-set-uri</code>）と oauth2-proxy（<code>OIDC_JWKS_URL</code>）が <code>http://keycloak:8080/realms/…/certs</code> から取る</td></tr>
+<tr><td class="k">access token lifespan</td><td>アクセストークンの寿命。</td><td>両 realm とも 300 秒。oauth2-proxy が 4 分ごとに refresh_token で更新する（<code>COOKIE_REFRESH: 4m</code>）。Cookie 自体は 8 時間</td></tr>
+<tr><td class="k">Admin REST API</td><td><code>/admin/realms/{realm}/users</code> などの管理 API。ユーザー作成、ロール付与、パスワード再設定ができる。</td><td>認証 API（<code>KeycloakAdminClient.kt</code>）だけが呼ぶ。BFF や画面からは直接触らない</td></tr>
+<tr><td class="k">hostname の 2 面性</td><td>ブラウザから見た URL とコンテナ間の URL が違う。<code>iss</code> はブラウザ側の URL で発行される。</td><td>ブラウザ: <code>http://localhost:8180</code>、コンテナ間: <code>http://keycloak:8080</code>。<code>KC_HOSTNAME</code> と <code>KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true</code> で両方を受け付ける。BFF は <code>issuer-uri</code> と <code>jwk-set-uri</code> を別々に設定</td></tr>
+</tbody></table></div>
+
+<div class="callout"><p><strong>開発モードの注意。</strong> Keycloak は <code>start-dev --import-realm</code> で起動し、起動のたびに realm JSON を取り込みます。会員登録で作ったユーザーも、コンテナを作り直すと消えます。realm の設定を変えたら <code>docker compose up -d --force-recreate keycloak</code> です。</p></div>
+
+<!-- ======================================================================= -->
+<h2 id="login"><span class="no">04</span>ログインの流れ</h2>
+<p>最初に <span class="v mono" data-c="http://localhost:8080/" data-s="http://admin.localhost:8080/">http://localhost:8080/</span> を開いてから、ログイン後の画面が出るまで。4 つの段階があり、Keycloak が出てくるのは B と、D の公開鍵の取得だけです。</p>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 1120 854" role="img" aria-label="ログインの流れ。ブラウザ、Nginx、oauth2-proxy、Keycloak、Nuxt、BFF の間の 20 ステップ" class="seq">
+<defs><marker id="arr-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="arr-l-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker><marker id="arr-l-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ok"/></marker><marker id="arr-l-ng" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ng"/></marker></defs>
+<rect x="4" y="58" width="1112" height="152" rx="6" class="band band-a"/>
+<text x="14" y="75" text-anchor="start" font-size="11" font-weight="700" class="phase">A. セッションの確認（無い）</text>
+<rect x="4" y="210" width="1112" height="190" rx="6" class="band band-b"/>
+<text x="14" y="227" text-anchor="start" font-size="11" font-weight="700" class="phase">B. Keycloak でログイン</text>
+<rect x="4" y="400" width="1112" height="114" rx="6" class="band band-c"/>
+<text x="14" y="417" text-anchor="start" font-size="11" font-weight="700" class="phase">C. トークン → Cookie</text>
+<rect x="4" y="514" width="1112" height="304" rx="6" class="band band-d"/>
+<text x="14" y="531" text-anchor="start" font-size="11" font-weight="700" class="phase">D. 認証済みの画面取得</text>
+<line x1="230" y1="52" x2="230" y2="848" class="life"/>
+<rect x="164" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="230" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
+<line x1="390" y1="52" x2="390" y2="848" class="life"/>
+<rect x="324" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="390" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
+<line x1="550" y1="52" x2="550" y2="848" class="life"/>
+<rect x="484" y="18" width="132" height="34" rx="6" class="pbox lane-p"/>
+<text x="550" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
+<line x1="710" y1="52" x2="710" y2="848" class="life"/>
+<rect x="644" y="18" width="132" height="34" rx="6" class="pbox lane-k"/>
+<text x="710" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
+<line x1="870" y1="52" x2="870" y2="848" class="life"/>
+<rect x="804" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="870" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nuxt</text>
+<line x1="1030" y1="52" x2="1030" y2="848" class="life"/>
+<rect x="964" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="1030" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
+<line x1="230" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-l)"/>
+<text x="310" y="77" text-anchor="middle" font-size="12" class="msglabel " data-c="① GET http://localhost:8080/" data-s="① GET http://admin.localhost:8080/">① GET http://localhost:8080/</text>
+<line x1="390" y1="122" x2="550" y2="122" class="msg" marker-end="url(#arr-l)"/>
+<text x="470" y="115" text-anchor="middle" font-size="12" class="msglabel ">② auth_request /oauth2/auth</text>
+<line x1="550" y1="160" x2="390" y2="160" class="msg ret" marker-end="url(#arr-l)"/>
+<text x="470" y="153" text-anchor="middle" font-size="12" class="msglabel ">③ 401 セッションなし</text>
+<line x1="390" y1="198" x2="230" y2="198" class="msg ret" marker-end="url(#arr-l)"/>
+<text x="310" y="191" text-anchor="middle" font-size="12" class="msglabel ">④ 302 /oauth2/start?rd=/</text>
+<line x1="230" y1="236" x2="550" y2="236" class="msg" marker-end="url(#arr-l)"/>
+<text x="390" y="229" text-anchor="middle" font-size="12" class="msglabel ">⑤ GET /oauth2/start（Nginx が中継）</text>
+<line x1="550" y1="274" x2="230" y2="274" class="msg ret" marker-end="url(#arr-l)"/>
+<text x="390" y="267" text-anchor="middle" font-size="12" class="msglabel ">⑥ 302 Keycloak のログイン画面へ（PKCE）</text>
+<line x1="230" y1="312" x2="710" y2="312" class="msg ln-k" marker-end="url(#arr-l)"/>
+<text x="470" y="305" text-anchor="middle" font-size="12" class="msglabel " data-c="⑦ alice がパスワードを入力" data-s="⑦ dave がパスワードを入力">⑦ alice がパスワードを入力</text>
+<line x1="710" y1="350" x2="230" y2="350" class="msg ret ln-k" marker-end="url(#arr-l)"/>
+<text x="470" y="343" text-anchor="middle" font-size="12" class="msglabel ">⑧ 302 /oauth2/callback?code=…</text>
+<line x1="230" y1="388" x2="550" y2="388" class="msg" marker-end="url(#arr-l)"/>
+<text x="390" y="381" text-anchor="middle" font-size="12" class="msglabel ">⑨ GET /oauth2/callback?code=…（Nginx が中継）</text>
+<line x1="550" y1="426" x2="710" y2="426" class="msg ln-k" marker-end="url(#arr-l)"/>
+<text x="630" y="419" text-anchor="middle" font-size="12" class="msglabel ">⑩ code をトークンと交換（keycloak:8080）</text>
+<line x1="710" y1="464" x2="550" y2="464" class="msg ret ln-jwt" marker-end="url(#arr-l-jwt)"/>
+<text x="630" y="457" text-anchor="middle" font-size="12" class="msglabel ">⑪ access_token（JWT）, id_token, refresh_token</text>
+<line x1="550" y1="502" x2="230" y2="502" class="msg ret" marker-end="url(#arr-l)"/>
+<text x="390" y="495" text-anchor="middle" font-size="12" class="msglabel " data-c="⑫ Set-Cookie _fsl_customer + 302 /" data-s="⑫ Set-Cookie _fsl_staff + 302 /">⑫ Set-Cookie _fsl_customer + 302 /</text>
+<line x1="230" y1="540" x2="390" y2="540" class="msg" marker-end="url(#arr-l)"/>
+<text x="310" y="533" text-anchor="middle" font-size="12" class="msglabel ">⑬ GET /（Cookie つき）</text>
+<line x1="390" y1="578" x2="550" y2="578" class="msg" marker-end="url(#arr-l)"/>
+<text x="470" y="571" text-anchor="middle" font-size="12" class="msglabel ">⑭ auth_request</text>
+<line x1="550" y1="616" x2="390" y2="616" class="msg ret ln-jwt" marker-end="url(#arr-l-jwt)"/>
+<text x="470" y="609" text-anchor="middle" font-size="12" class="msglabel ">⑮ 202 + X-Auth-Request-Access-Token</text>
+<line x1="390" y1="654" x2="870" y2="654" class="msg ln-jwt" marker-end="url(#arr-l-jwt)"/>
+<text x="630" y="647" text-anchor="middle" font-size="12" class="msglabel ">⑯ GET / + x-amzn-oidc-accesstoken: JWT</text>
+<line x1="870" y1="692" x2="1030" y2="692" class="msg ln-jwt" marker-end="url(#arr-l-jwt)"/>
+<text x="950" y="685" text-anchor="middle" font-size="12" class="msglabel ">⑰ GET /bff/me（同じ JWT を転送）</text>
+<line x1="1030" y1="730" x2="710" y2="730" class="msg ln-k" marker-end="url(#arr-l)"/>
+<text x="870" y="723" text-anchor="middle" font-size="12" class="msglabel ">⑱ 公開鍵の取得 /certs（初回だけ）</text>
+<line x1="1030" y1="768" x2="870" y2="768" class="msg ret" marker-end="url(#arr-l)"/>
+<text x="950" y="761" text-anchor="middle" font-size="12" class="msglabel ">⑲ 利用者情報（userType, roles, capabilities）</text>
+<line x1="870" y1="806" x2="230" y2="806" class="msg ret" marker-end="url(#arr-l)"/>
+<text x="550" y="799" text-anchor="middle" font-size="12" class="msglabel ">⑳ HTML</text>
+</svg>
+</div>
+<figcaption>A で「セッションが無い」と分かり、B で Keycloak にパスワードを確認してもらい、C でトークンを暗号化 Cookie にしまい、D で Cookie から取り出した JWT が Nginx → Nuxt → BFF と渡る。破線は応答。橙は Keycloak との通信、黄は JWT が運ばれる線。</figcaption>
+</figure>
+
+<ol class="steps"><li><span class="num">①</span><span>ブラウザが <span class="v mono" data-c="localhost:8080" data-s="admin.localhost:8080">localhost:8080</span> を開く。まだ Cookie は無い。</span></li>
+<li><span class="num">②</span><span>Nginx は転送する前に、そのホスト用の <span class="v mono" data-c="oauth2-proxy-customer" data-s="oauth2-proxy-staff">oauth2-proxy-customer</span> に「この人はログイン済みか」を聞く（<code>auth_request</code>）。本文は渡さず、Cookie だけを見せる。</span></li>
+<li><span class="num">③</span><span>Cookie <code><span class="v mono" data-c="_fsl_customer" data-s="_fsl_staff">_fsl_customer</span></code> が無いので 401。</span></li>
+<li><span class="num">④</span><span>画面のパスなので、Nginx はログイン開始の URL へリダイレクトする（<code>/bff/*</code> なら 401 の JSON を返す）。</span></li>
+<li><span class="num">⑤</span><span>ブラウザがログイン開始を要求する。<code>/oauth2/*</code> は Nginx がそのまま oauth2-proxy に渡す。</span></li>
+<li><span class="num">⑥</span><span>oauth2-proxy が「認可コードフロー」を始める。state と PKCE の code_challenge（S256）を付けて、<code>http://localhost:8180/realms/<span class="v mono" data-c="customer" data-s="staff">customer</span>/protocol/openid-connect/auth</code> へ飛ばす。ここで初めて Keycloak が登場する。</span></li>
+<li><span class="num">⑦</span><span>ログイン画面は Keycloak のもの（URL は <code>localhost:8180</code>）。<span class="v mono" data-c="alice" data-s="dave">alice</span> が ID とパスワードを入れる。パスワードを受け取るのは Keycloak だけで、Nginx も BFF も知らない。</span></li>
+<li><span class="num">⑧</span><span>認証に成功すると、Keycloak は使い捨ての「認可コード」を付けて、client <code><span class="v mono" data-c="fullstack-lab-customer" data-s="fullstack-lab-staff">fullstack-lab-customer</span></code> に登録された redirect URI（<code><span class="v mono" data-c="localhost:8080" data-s="admin.localhost:8080">localhost:8080</span>/oauth2/callback</code>）へ戻す。</span></li>
+<li><span class="num">⑨</span><span>ブラウザがコードを oauth2-proxy に届ける。</span></li>
+<li><span class="num">⑩</span><span>oauth2-proxy がコンテナ間の URL <code>http://keycloak:8080/realms/<span class="v mono" data-c="customer" data-s="staff">customer</span>/protocol/openid-connect/token</code> に、コード・PKCE の code_verifier・client secret を送る。ブラウザを通らない「裏側」の通信。</span></li>
+<li><span class="num">⑪</span><span>Keycloak が 3 つのトークンを返す。access_token が、この後ずっと BFF へ渡される JWT（有効期限 5 分）。</span></li>
+<li><span class="num">⑫</span><span>oauth2-proxy はトークン一式を暗号化して Cookie <code><span class="v mono" data-c="_fsl_customer" data-s="_fsl_staff">_fsl_customer</span></code> に入れ、元のページへ戻す。ブラウザが持つのはこの暗号化 Cookie だけで、JWT そのものは見えない。</span></li>
+<li><span class="num">⑬</span><span>もう一度 <code>/</code> を開く。今度は Cookie がある。</span></li>
+<li><span class="num">⑭</span><span>Nginx が再び oauth2-proxy に確認する。</span></li>
+<li><span class="num">⑮</span><span>Cookie を復号できたので 202。応答ヘッダーに access_token（JWT）を載せて Nginx に渡す。</span></li>
+<li><span class="num">⑯</span><span>Nginx はその JWT を <code>x-amzn-oidc-accesstoken</code> ヘッダーに入れて Nuxt へ転送する。ALB が付けるのと同じヘッダー名。ブラウザが同名ヘッダーを送ってきても Nginx が必ず上書きする。</span></li>
+<li><span class="num">⑰</span><span>SSR 中の Nuxt は <code>http://bff:8080</code> を直接呼ぶ。Nginx を通らないので、JWT とリクエスト ID は Nuxt 自身が引き継ぐ。</span></li>
+<li><span class="num">⑱</span><span>BFF は JWT の <code>iss</code> を見て検証器を選び、<code>http://keycloak:8080/realms/<span class="v mono" data-c="customer" data-s="staff">customer</span>/protocol/openid-connect/certs</code>（JWKS）から公開鍵を取る。以後はキャッシュ。署名・iss・aud・exp を確かめる。</span></li>
+<li><span class="num">⑲</span><span>検証済み JWT から <code>CurrentUser</code>（sub、表示名、<span class="v mono" data-c="CUSTOMER" data-s="STAFF">CUSTOMER</span>、ロール）を組み立て、画面の出し分け用の情報を返す。</span></li>
+<li><span class="num">⑳</span><span>ログイン後の画面が描かれる。以後 4 分ごとに oauth2-proxy がトークンを更新し、新しい Cookie を Nginx 経由でブラウザへ返す（Cookie 自体は 8 時間）。</span></li></ol>
+
+<div class="callout">
+<p><strong>ブラウザが持っているのは JWT ではなく、暗号化された Cookie です。</strong> JWT は oauth2-proxy が Cookie を復号したときに現れ、Nginx がヘッダーに載せて後段へ渡します。だから DevTools の Cookie 欄を見ても JWT は読めません。見るなら、ログイン後に <code>/swagger/</code> から <code>/bff/me</code> を呼ぶと、BFF が JWT から組み立てた利用者情報が返ります。</p>
+<p><strong>Keycloak の URL が 2 つあるのはなぜか。</strong> ブラウザが開くログイン画面と、トークンの <code>iss</code> は <code>http://localhost:8180</code>。oauth2-proxy がコードを交換するときと、BFF が公開鍵を取るときはコンテナ間の <code>http://keycloak:8080</code>。ブラウザは <code>keycloak</code> という名前を解決できず、コンテナは <code>localhost:8180</code> が自分自身を指してしまうためです。AWS では IdP が公開 URL ひとつになるので、この区別は消えます。</p>
+</div>
+
+<!-- ======================================================================= -->
+<h2 id="jwt"><span class="no">05</span>JWT の中身と、誰がどこを見るか</h2>
+<p>JWT は「ヘッダー.ペイロード.署名」を Base64URL でつないだ文字列です。ペイロードは誰でも読めますが、署名があるので改ざんできません。<span class="v" data-c="alice" data-s="dave">alice</span> のアクセストークンは、おおよそ次の形です（値は例。他にも項目があります）。</p>
+
+<div class="jwt">
+<div>
+<pre><code><span class="hd">// ヘッダー（署名の方式と、使った鍵の ID）
+{
+  "alg": "RS256",
+  "typ": "JWT",
+  "kid": "…（realm の鍵の ID）"
+}</span>
+<span class="pl">// ペイロード（クレーム）
+{
+  "iss": "<span class="v mono" data-c="http://localhost:8180/realms/customer" data-s="http://localhost:8180/realms/staff">http://localhost:8180/realms/customer</span>",
+  "sub": "…（Keycloak が採番したユーザー ID）",
+  "aud": "<span class="v mono" data-c="fullstack-lab-customer" data-s="fullstack-lab-staff">fullstack-lab-customer</span>",
+  "azp": "<span class="v mono" data-c="fullstack-lab-customer" data-s="fullstack-lab-staff">fullstack-lab-customer</span>",
+  "exp": 1761800300,   // iat + 300 秒
+  "iat": 1761800000,
+  "typ": "Bearer",
+  "preferred_username": "<span class="v mono" data-c="alice" data-s="dave">alice</span>",
+  <span class="only-c">"realm_access": { "roles": ["customer", …] }</span><span class="only-s">"groups": ["task-admin"]</span>
+}</span>
+<span class="sg">// 署名: realm の秘密鍵で ヘッダー.ペイロード に署名したもの</span></code></pre>
+</div>
+<div class="claims">
+  <div class="claim"><span class="cn">署名 + kid</span><span><span class="chip bff">BFF</span>JWKS から <code>kid</code> の公開鍵を取り、署名を検証する。ここで偽造が落ちる。oauth2-proxy も受け取り時に同じ検証をする</span></div>
+  <div class="claim"><span class="cn">iss</span><span><span class="chip bff">BFF</span>どの発行元用の検証器を使うかを選ぶ。登録の無い iss は拒否。<strong>利用者の種別（<span class="v mono" data-c="CUSTOMER" data-s="STAFF">CUSTOMER</span>）もここで決まる</strong>。ホスト名ではなく iss で判断する</span></div>
+  <div class="claim"><span class="cn">aud</span><span><span class="chip bff">BFF</span><code><span class="v mono" data-c="fullstack-lab-customer" data-s="fullstack-lab-staff">fullstack-lab-customer</span></code> を含むか。同じ Keycloak が別のアプリ向けに出したトークンを拒否するため。realm の audience mapper が入れている</span></div>
+  <div class="claim"><span class="cn">exp</span><span><span class="chip bff">BFF</span>期限切れなら 401。寿命 5 分だが、oauth2-proxy が 4 分ごとに更新するので普段は切れない</span></div>
+  <div class="claim"><span class="cn">sub</span><span><span class="chip bff">BFF</span><span class="chip z">認可 API</span>利用者 ID。認可 API に送る主体の <code>id</code> になり、タスクの <code>createdBy</code> と比べて所有者かを判定する。パスワード変更の対象 ID にも使う（他人の ID を指定できない）</span></div>
+  <div class="claim"><span class="cn">preferred_username</span><span><span class="chip bff">BFF</span>表示名（<code>nameClaim</code>）。守りには使わない</span></div>
+  <div class="claim"><span class="cn"><span class="v mono" data-c="realm_access.roles" data-s="groups">realm_access.roles</span></span><span><span class="chip bff">BFF</span><span class="chip z">認可 API</span>ロールの置き場所は IdP で違う。Keycloak は <code>realm_access.roles</code>、Okta は <code>groups</code>。BFF が <code>roles-claim</code> の設定で吸収して <code>roles</code> に揃える。<span class="only-c">一般利用者は所有者で判定するので、ロールは判定に使わない。</span><span class="only-s">社員は <code>task-admin</code> に付いた操作が許される。</span></span></div>
+  <div class="claim"><span class="cn">読まない人</span><span><span class="chip n">Nginx</span><span class="chip n">Nuxt</span><span class="chip n">API</span>Nginx と Nuxt は中身を見ずに運ぶだけ。API は BFF を信頼し、JWT を受け取らない（API でも検証する多層防御は発展課題）</span></div>
+</div>
+</div>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 900 196" role="img" aria-label="Keycloak が秘密鍵で JWT に署名し、BFF が公開鍵を JWKS から取得して署名を検証する" class="arch" style="min-width:600px">
+  <defs>
+    <marker id="arr-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
+    <marker id="arr-s-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-k"/></marker>
+    <marker id="arr-s-j" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker>
+  </defs>
+  <rect x="20" y="40" width="220" height="100" rx="10" class="box k"/>
+  <text x="130" y="64" text-anchor="middle" class="t13">Keycloak（realm）</text>
+  <text x="130" y="86" text-anchor="middle" class="t12">秘密鍵 🔒  …  公開鍵 🔓</text>
+  <text x="130" y="106" text-anchor="middle" class="t11 tm">秘密鍵は外に出ない</text>
+  <text x="130" y="124" text-anchor="middle" class="t11 tm">公開鍵は /certs（JWKS）で配る</text>
+
+  <line x1="240" y1="70" x2="396" y2="70" class="ln jwt" marker-end="url(#arr-s-j)"/>
+  <text x="318" y="62" text-anchor="middle" class="t11 tj">秘密鍵で署名した JWT</text>
+  <text x="318" y="86" text-anchor="middle" class="t11 tm">（Cookie → Nginx 経由）</text>
+
+  <rect x="400" y="40" width="200" height="100" rx="10" class="box"/>
+  <text x="500" y="64" text-anchor="middle" class="t13">BFF</text>
+  <text x="500" y="86" text-anchor="middle" class="t12">公開鍵で署名を検証</text>
+  <text x="500" y="106" text-anchor="middle" class="t11 tm">NimbusJwtDecoder.withJwkSetUri</text>
+  <text x="500" y="124" text-anchor="middle" class="t11 tm">+ iss、aud、exp の検証器</text>
+
+  <polyline points="500,140 500,166 130,166 130,146" class="ln k thin" marker-end="url(#arr-s-k)"/>
+  <text x="315" y="184" text-anchor="middle" class="t11 tk">GET http://keycloak:8080/realms/…/protocol/openid-connect/certs（初回だけ。以後キャッシュ）</text>
+
+  <rect x="640" y="40" width="240" height="100" rx="10" class="box ghost"/>
+  <text x="760" y="64" text-anchor="middle" class="t13">偽の JWT を送ると</text>
+  <text x="760" y="86" text-anchor="middle" class="t12 tng">署名が合わず 401</text>
+  <text x="760" y="106" text-anchor="middle" class="t11 tm">秘密鍵を持たない限り</text>
+  <text x="760" y="124" text-anchor="middle" class="t11 tm">正しい署名は作れない</text>
+</svg>
+</div>
+<figcaption>署名は「realm の秘密鍵を持つ者だけが作れる印」。BFF は公開鍵だけで真偽を確かめられるので、Keycloak に毎回問い合わせる必要がない。</figcaption>
+</figure>
+
+<!-- ======================================================================= -->
+<h2 id="authz"><span class="no">06</span>認可の流れ</h2>
+<p>ログイン済みの <span class="v" data-c="alice" data-s="dave">alice</span> がタスク 1 の詳細を開くときの、BFF の内側です。BFF は「対象を取る → 認可 API に聞く → 許可なら続きを取る」の順で動き、拒否なら API を呼びません。</p>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 1120 550" role="img" aria-label="タスク詳細を開くときの認可の流れ。BFF が JWT を検証し、API から対象を取り、認可 API に可否を聞く" class="seq">
+<defs><marker id="arr-z" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="arr-z-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker><marker id="arr-z-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ok"/></marker><marker id="arr-z-ng" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ng"/></marker></defs>
+<rect x="4" y="400" width="1112" height="76" rx="6" class="band band-ok"/>
+<text x="14" y="417" text-anchor="start" font-size="11" font-weight="700" class="phase">許可された場合</text>
+<rect x="4" y="476" width="1112" height="38" rx="6" class="band band-ng"/>
+<text x="14" y="493" text-anchor="start" font-size="11" font-weight="700" class="phase">拒否された場合</text>
+<line x1="230" y1="52" x2="230" y2="544" class="life"/>
+<rect x="164" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="230" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
+<line x1="390" y1="52" x2="390" y2="544" class="life"/>
+<rect x="324" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="390" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
+<line x1="550" y1="52" x2="550" y2="544" class="life"/>
+<rect x="484" y="18" width="132" height="34" rx="6" class="pbox lane-p"/>
+<text x="550" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
+<line x1="710" y1="52" x2="710" y2="544" class="life"/>
+<rect x="644" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="710" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
+<line x1="870" y1="52" x2="870" y2="544" class="life"/>
+<rect x="804" y="18" width="132" height="34" rx="6" class="pbox lane-z"/>
+<text x="870" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">認可 API</text>
+<line x1="1030" y1="52" x2="1030" y2="544" class="life"/>
+<rect x="964" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="1030" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">API</text>
+<line x1="230" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-z)"/>
+<text x="310" y="77" text-anchor="middle" font-size="12" class="msglabel ">① GET /bff/tasks/1（Cookie つき）</text>
+<line x1="390" y1="122" x2="550" y2="122" class="msg" marker-end="url(#arr-z)"/>
+<text x="470" y="115" text-anchor="middle" font-size="12" class="msglabel ">② auth_request</text>
+<line x1="550" y1="160" x2="390" y2="160" class="msg ret ln-jwt" marker-end="url(#arr-z-jwt)"/>
+<text x="470" y="153" text-anchor="middle" font-size="12" class="msglabel ">③ 202 + アクセストークン</text>
+<line x1="390" y1="198" x2="710" y2="198" class="msg ln-jwt" marker-end="url(#arr-z-jwt)"/>
+<text x="550" y="191" text-anchor="middle" font-size="12" class="msglabel ">④ GET /bff/tasks/1 + x-amzn-oidc-accesstoken</text>
+<rect x="560" y="223" width="300" height="24" rx="5" class="note "/>
+<text x="710" y="240" text-anchor="middle" font-size="11" class="notetext">⑤ JWT を検証 → CurrentUser(sub, userType, roles)</text>
+<line x1="710" y1="274" x2="1030" y2="274" class="msg" marker-end="url(#arr-z)"/>
+<text x="870" y="267" text-anchor="middle" font-size="12" class="msglabel ">⑥ GET /api/tasks/1</text>
+<line x1="1030" y1="312" x2="710" y2="312" class="msg ret" marker-end="url(#arr-z)"/>
+<text x="870" y="305" text-anchor="middle" font-size="12" class="msglabel ">⑦ Task（createdBy = 所有者の sub）</text>
+<line x1="710" y1="350" x2="870" y2="350" class="msg ln-z" marker-end="url(#arr-z)"/>
+<text x="790" y="343" text-anchor="middle" font-size="12" class="msglabel ">⑧ POST /authz/v1/decisions</text>
+<line x1="870" y1="388" x2="710" y2="388" class="msg ret ln-z" marker-end="url(#arr-z)"/>
+<text x="790" y="381" text-anchor="middle" font-size="12" class="msglabel ">⑨ {allowed, reason}</text>
+<line x1="710" y1="426" x2="1030" y2="426" class="msg ln-ok" marker-end="url(#arr-z-ok)"/>
+<text x="870" y="419" text-anchor="middle" font-size="12" class="msglabel ">⑩ GET /api/tasks/1/due-date-info</text>
+<line x1="710" y1="464" x2="230" y2="464" class="msg ret ln-ok" marker-end="url(#arr-z-ok)"/>
+<text x="470" y="457" text-anchor="middle" font-size="12" class="msglabel ">⑪ 200 TaskDetailView</text>
+<line x1="710" y1="502" x2="230" y2="502" class="msg ret ln-ng" marker-end="url(#arr-z-ng)"/>
+<text x="470" y="495" text-anchor="middle" font-size="12" class="msglabel ">⑫ 404（他人のタスクの存在を知らせない）</text>
+</svg>
+</div>
+<figcaption>門 2（JWT 検証）と門 3（認可）は両方 BFF のリクエスト処理の中で起きる。認可 API は判定だけを返し、データには触らない。</figcaption>
+</figure>
+
+<ol class="steps"><li><span class="num">①</span><span>詳細画面のデータを取る。ブラウザからの fetch でも、SSR 中の Nuxt からでも、BFF 以降は同じ。</span></li>
+<li><span class="num">②</span><span>Nginx が Cookie を oauth2-proxy に確認させる。</span></li>
+<li><span class="num">③</span><span>セッション有効。JWT が返る。</span></li>
+<li><span class="num">④</span><span>Nginx が JWT をヘッダーに載せて BFF へ。</span></li>
+<li><span class="num">⑤</span><span><strong>門 2</strong>。BFF が署名（公開鍵）・iss・aud・exp を検証する。iss から <span class="v mono" data-c="CUSTOMER" data-s="STAFF">CUSTOMER</span>、<span class="v mono" data-c="realm_access.roles" data-s="groups">realm_access.roles</span> からロールを取り出す。失敗したら 401 で終わり。</span></li>
+<li><span class="num">⑥</span><span>まず対象を取る。API は BFF を信頼していて、自分では認証も認可もしない（入口からは 404 で到達できない）。</span></li>
+<li><span class="num">⑦</span><span>タスクには登録した人の <code>sub</code> が入っている。これが「所有者」。</span></li>
+<li><span class="num">⑧</span><span><strong>門 3</strong>。BFF が認可 API に問い合わせる。送るのは主体 <code>{id: sub, userType: <span class="v" data-c="CUSTOMER" data-s="STAFF">CUSTOMER</span>, roles: [<span class="v" data-c="customer" data-s="task-admin">customer</span>]}</code>、操作 <code>task:read</code>、対象 <code>{type: task, ownerId}</code>。</span></li>
+<li><span class="num">⑨</span><span>認可 API は <code>Policy.kt</code> で判定する。<span class="v" data-c="一般利用者なら ownerId == sub のときだけ許可（理由: customer owns the resource）" data-s="社員なら roles に task:read を許すロールがあれば所有者を問わず許可（理由: staff role grants task:read）">一般利用者なら ownerId == sub のときだけ許可（理由: customer owns the resource）</span>。どれにも当てはまらなければ拒否。</span></li>
+<li><span class="num">⑩</span><span>許可されたときだけ、続きの API（外部カレンダーの補足）を呼び、画面用に集約する。</span></li>
+<li><span class="num">⑪</span><span>詳細が返る。</span></li>
+<li><span class="num">⑫</span><span>拒否なら API は呼ばず、詳細は 404、登録は 403 を返す。認可 API 自体が落ちているときは 503 で拒否する（fail-closed）。</span></li></ol>
+
+<h3>判定表（authz の application.yml と Policy.kt）</h3>
+<p>ロール名（<code>task-viewer</code>、<code>task-admin</code>）は IdP 側が付け、「そのロールで何ができるか」は認可 API 側の設定が持ちます。一般利用者はロールではなく所有者で判定します。</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>操作</th><th>一般利用者（alice、bob）</th><th>社員 task-viewer（carol）</th><th>社員 task-admin（dave）</th></tr></thead>
+<tbody>
+<tr><td class="k mono">task:list</td><td><span class="ok">○</span> 自分の分だけに絞る</td><td><span class="ok">○</span> 全件</td><td><span class="ok">○</span> 全件</td></tr>
+<tr><td class="k mono">task:read</td><td><span class="ok">○</span> 自分のだけ。他人のは 404</td><td><span class="ok">○</span></td><td><span class="ok">○</span></td></tr>
+<tr><td class="k mono">task:create</td><td><span class="ok">○</span></td><td><span class="ng">×</span> 403</td><td><span class="ok">○</span></td></tr>
+<tr><td class="k mono">account:change-password</td><td><span class="ok">○</span> 自分のアカウント</td><td><span class="ng">×</span> 社員のアカウントは Okta 側で管理</td><td><span class="ng">×</span> 同左</td></tr>
+<tr><td class="k mono">（それ以外）</td><td><span class="ng">×</span> 既定で拒否</td><td><span class="ng">×</span></td><td><span class="ng">×</span></td></tr>
+</tbody></table></div>
+<p class="muted" style="margin-top:10px">判定理由は <code>docker compose logs authz | grep decision</code> で見られます。<code>customer owns the resource</code>、<code>no staff role grants task:create (roles=[task-viewer])</code> のように、なぜ許可・拒否したかが残ります。</p>
+
+<!-- ======================================================================= -->
+<h2 id="hosts"><span class="no">07</span>2 つのホスト、2 つの realm、1 つの BFF</h2>
+<p>一般利用者と社員で違うのは入口だけです。Nginx がホスト名で oauth2-proxy を選び、oauth2-proxy が realm を選びます。BFF は「どのホストから来たか」を知らず、JWT の <code>iss</code> だけで種別を決めます。</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th></th><th>一般利用者</th><th>社員</th></tr></thead>
+<tbody>
+<tr class="row-c"><td class="k">ホスト</td><td class="mono">localhost:8080</td><td class="mono">admin.localhost:8080</td></tr>
+<tr class="row-c"><td class="k">oauth2-proxy</td><td class="mono">oauth2-proxy-customer</td><td class="mono">oauth2-proxy-staff</td></tr>
+<tr class="row-c"><td class="k">Cookie</td><td class="mono">_fsl_customer</td><td class="mono">_fsl_staff</td></tr>
+<tr class="row-c"><td class="k">Keycloak の realm</td><td class="mono">customer</td><td class="mono">staff（Okta の代替）</td></tr>
+<tr class="row-c"><td class="k">client</td><td class="mono">fullstack-lab-customer</td><td class="mono">fullstack-lab-staff</td></tr>
+<tr class="row-c"><td class="k">JWT の iss</td><td class="mono">http://localhost:8180/realms/customer</td><td class="mono">http://localhost:8180/realms/staff</td></tr>
+<tr class="row-c"><td class="k">JWT の aud</td><td class="mono">fullstack-lab-customer</td><td class="mono">fullstack-lab-staff</td></tr>
+<tr class="row-c"><td class="k">ロールのクレーム</td><td class="mono">realm_access.roles</td><td class="mono">groups</td></tr>
+<tr class="row-c"><td class="k">BFF が決める userType</td><td class="mono">CUSTOMER</td><td class="mono">STAFF</td></tr>
+<tr class="row-c"><td class="k">認可の軸</td><td>所有者（sub == createdBy）</td><td>ロール（グループ名）</td></tr>
+<tr class="row-c"><td class="k">公開パス</td><td><code>/signup</code>、<code>/bff/signup</code>、<code>/_nuxt/</code></td><td>無し。全部 auth_request で守る</td></tr>
+<tr class="row-c"><td class="k">AWS では</td><td>ALB の authenticate-oidc → Keycloak</td><td>ALB の authenticate-oidc → Okta</td></tr>
+</tbody></table></div>
+<p style="margin-top:14px">だから <strong>一般利用者の Cookie を持って管理画面を開いても 401 になります</strong>。admin.localhost 側の oauth2-proxy は <code>_fsl_customer</code> を知らないからです。逆に、もし BFF がホスト名で種別を決めていたら、ホストヘッダーを偽ることで社員になりすませてしまいます。iss で決めるのはそのためです。</p>
+
+<!-- ======================================================================= -->
+<h2 id="signup"><span class="no">08</span>会員登録とパスワード変更（認証 API）</h2>
+<p>ここまでの登場人物はログインしか扱いません。ユーザーを「作る」「パスワードを変える」のは認証 API（<code>auth/</code>）の仕事で、Keycloak の Admin REST API を代行して呼びます。ログイン自体は担当しません。</p>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 960 512" role="img" aria-label="会員登録の流れ。公開パスを通って BFF、認証 API、Keycloak の Admin API に至る" class="seq">
+<defs><marker id="arr-u" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="arr-u-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker><marker id="arr-u-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ok"/></marker><marker id="arr-u-ng" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ng"/></marker></defs>
+<line x1="230" y1="52" x2="230" y2="506" class="life"/>
+<rect x="164" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="230" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
+<line x1="390" y1="52" x2="390" y2="506" class="life"/>
+<rect x="324" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="390" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
+<line x1="550" y1="52" x2="550" y2="506" class="life"/>
+<rect x="484" y="18" width="132" height="34" rx="6" class="pbox "/>
+<text x="550" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
+<line x1="710" y1="52" x2="710" y2="506" class="life"/>
+<rect x="644" y="18" width="132" height="34" rx="6" class="pbox lane-au"/>
+<text x="710" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">認証 API</text>
+<line x1="870" y1="52" x2="870" y2="506" class="life"/>
+<rect x="804" y="18" width="132" height="34" rx="6" class="pbox lane-k"/>
+<text x="870" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
+<line x1="230" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-u)"/>
+<text x="310" y="77" text-anchor="middle" font-size="12" class="msglabel ">① POST /bff/signup（未認証）</text>
+<rect x="225" y="109" width="330" height="24" rx="5" class="note "/>
+<text x="390" y="126" text-anchor="middle" font-size="11" class="notetext">② 公開パス: auth_request なし、X-Amzn-Oidc-* を空に</text>
+<line x1="390" y1="160" x2="550" y2="160" class="msg" marker-end="url(#arr-u)"/>
+<text x="470" y="153" text-anchor="middle" font-size="12" class="msglabel ">③ POST /bff/signup</text>
+<line x1="550" y1="198" x2="710" y2="198" class="msg ln-au" marker-end="url(#arr-u)"/>
+<text x="630" y="191" text-anchor="middle" font-size="12" class="msglabel ">④ POST /auth/v1/customers（auth-client）</text>
+<line x1="710" y1="236" x2="870" y2="236" class="msg ln-k" marker-end="url(#arr-u)"/>
+<text x="790" y="229" text-anchor="middle" font-size="12" class="msglabel ">⑤ token: grant_type=client_credentials</text>
+<line x1="870" y1="274" x2="710" y2="274" class="msg ret ln-jwt" marker-end="url(#arr-u-jwt)"/>
+<text x="790" y="267" text-anchor="middle" font-size="12" class="msglabel ">⑥ サービスアカウントのトークン</text>
+<line x1="710" y1="312" x2="870" y2="312" class="msg ln-k" marker-end="url(#arr-u)"/>
+<text x="790" y="305" text-anchor="middle" font-size="12" class="msglabel ">⑦ POST /admin/realms/customer/users</text>
+<line x1="870" y1="350" x2="710" y2="350" class="msg ret ln-k" marker-end="url(#arr-u)"/>
+<text x="790" y="343" text-anchor="middle" font-size="12" class="msglabel ">⑧ 201 Location: …/users/{id}（重複なら 409）</text>
+<line x1="710" y1="388" x2="870" y2="388" class="msg ln-k" marker-end="url(#arr-u)"/>
+<text x="790" y="381" text-anchor="middle" font-size="12" class="msglabel ">⑨ POST …/users/{id}/role-mappings/realm [customer]</text>
+<line x1="710" y1="426" x2="550" y2="426" class="msg ret ln-au" marker-end="url(#arr-u)"/>
+<text x="630" y="419" text-anchor="middle" font-size="12" class="msglabel ">⑩ 201 アカウント</text>
+<line x1="550" y1="464" x2="230" y2="464" class="msg ret" marker-end="url(#arr-u)"/>
+<text x="390" y="457" text-anchor="middle" font-size="12" class="msglabel ">⑪ 201 {userId, email}</text>
+</svg>
+</div>
+<figcaption>未認証のまま入れる唯一の経路。Nginx は認証ヘッダーを空にし、BFF もこのパスだけ JWT を要求しない。Keycloak に対しては、認証 API がサービスアカウント（人ではないアカウント）としてログインしてから Admin API を叩く。</figcaption>
+</figure>
+
+<ol class="steps"><li><span class="num">①</span><span><code>/signup</code> の画面から送る。ログインしていないので Cookie は無い。</span></li>
+<li><span class="num">②</span><span><code>public-locations.conf</code> の 3 つ（<code>/signup</code>、<code>/bff/signup</code>、<code>/_nuxt/</code>）だけは認証なしで通す。ただし <code>localhost</code> のホストだけで、<code>admin.localhost</code> には無い。認証ヘッダーは空にして渡す。</span></li>
+<li><span class="num">③</span><span>BFF 側も <code>SecurityConfig</code> でこのパスだけ <code>permitAll</code>。他は全部 JWT 必須。</span></li>
+<li><span class="num">④</span><span>BFF は publish された <code>auth-client</code> で認証 API を呼ぶ。主体が無いので認可 API には聞かない。</span></li>
+<li><span class="num">⑤</span><span>認証 API は人ではなく「アプリ自身」として Keycloak にログインする。client <code>auth-api</code> とそのシークレット（<code>AUTH_API_CLIENT_SECRET</code>）を送る。</span></li>
+<li><span class="num">⑥</span><span>Admin API 用のトークン。認証 API は期限の 30 秒前まで使い回す。</span></li>
+<li><span class="num">⑦</span><span>Admin REST API でユーザーを作る（username = email、emailVerified = true、パスワード）。<code>auth-api</code> には realm-management の <code>manage-users</code> / <code>view-users</code> が付いているので許される。</span></li>
+<li><span class="num">⑧</span><span>Keycloak が採番した ID が Location ヘッダーで返る。この ID が、ログイン後の JWT の <code>sub</code> になる。</span></li>
+<li><span class="num">⑨</span><span>realm ロール <code>customer</code> を付ける。失敗したらユーザーを削除して、登録をやり直せる状態に戻す。</span></li>
+<li><span class="num">⑩</span><span>契約（auth.yaml）の形で返す。</span></li>
+<li><span class="num">⑪</span><span>画面は「ログインする」の導線を出す。以後は図 2 のいつものログインに入る。</span></li></ol>
+
+<h3>パスワード変更は門を全部通る</h3>
+<ol class="steps">
+  <li><span class="num">①</span><span>ログイン済みの一般利用者が <code>POST /bff/me/password</code> を呼ぶ。Nginx の auth_request と BFF の JWT 検証を通る（門 1、門 2）。</span></li>
+  <li><span class="num">②</span><span>BFF が認可 API に <code>account:change-password</code> を聞く。対象の <code>ownerId</code> には JWT の <code>sub</code> を使うので、他人のアカウントを指定する余地が無い（門 3）。社員は <code>customer-actions</code> にしか無い操作なので 403 になり、認証 API は呼ばれない。</span></li>
+  <li><span class="num">③</span><span>認証 API が「現在のパスワード」を確かめる。やり方は、そのユーザー名とパスワードで Keycloak のトークンエンドポイントに <code>grant_type=password</code> を投げ、トークンが取れるかどうか。<code>invalid_grant</code> なら不一致で 403。</span></li>
+  <li><span class="num">④</span><span>一致したら Admin API の <code>PUT /users/{id}/reset-password</code> で新しいパスワードを設定する。</span></li>
+</ol>
+
+<!-- ======================================================================= -->
+<h2 id="aws"><span class="no">09</span>ローカルと AWS の対応</h2>
+<p>アプリ側（Nuxt、BFF、認可 API、認証 API）のコードは AWS でも変わりません。差し替わるのは入口と IdP だけです。</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>役割</th><th>ローカル</th><th>AWS（想定）</th></tr></thead>
+<tbody>
+<tr><td class="k">入口と振り分け</td><td>Nginx（ホスト別の server）</td><td>ALB のリスナールール（ホスト条件）</td></tr>
+<tr><td class="k">認証アクション（門 1）</td><td>oauth2-proxy × 2</td><td>ALB の <code>authenticate-oidc</code>。HTTPS リスナーが必須</td></tr>
+<tr><td class="k">セッション Cookie</td><td><code>_fsl_customer</code> / <code>_fsl_staff</code></td><td><code>AWSELBAuthSessionCookie-*</code></td></tr>
+<tr><td class="k">一般利用者の IdP</td><td>Keycloak realm customer</td><td>Keycloak（ECS で自前か、代替は未決）</td></tr>
+<tr><td class="k">社員の IdP</td><td>Keycloak realm staff（groups クレームを出す）</td><td>Okta（groups クレーム）。BFF の <code>staff</code> 発行元の設定を差し替えるだけ</td></tr>
+<tr><td class="k">BFF への JWT</td><td><code>x-amzn-oidc-accesstoken</code></td><td>同じヘッダー名。ALB が付ける</td></tr>
+<tr><td class="k">門 2、門 3</td><td>BFF、認可 API</td><td>同じ</td></tr>
+<tr><td class="k">公開パス</td><td><code>public-locations.conf</code></td><td>認証アクションを付けないリスナールール</td></tr>
+</tbody></table></div>
+
+<!-- ======================================================================= -->
+<h2 id="read"><span class="no">10</span>確かめ方と読む場所</h2>
+<div class="two">
+<div>
+<h3>動かして見る</h3>
+<pre><code>docker compose up -d --build --wait
+./scripts/smoke-test.sh          # 4 ユーザーの実ログイン、偽トークンの拒否、認可
+docker compose logs authz | grep decision      # 認可の判定と理由
+docker compose logs -f bff auth authz api      # requestId で横断
+curl -si localhost:8080/bff/tasks              # Cookie 無し → 401 JSON
+curl -si localhost:8080/                       # Cookie 無し → 302 /oauth2/start</code></pre>
+<p style="margin-top:12px">ログイン後に <code>http://localhost:8080/swagger/</code> で <code>/bff/me</code> を「Try it out」すると、BFF が JWT から組み立てた <code>userType</code>・<code>roles</code>・<code>capabilities</code> が見えます。</p>
+</div>
+<div>
+<h3>この図の元になったファイル（fullstack-lab 内）</h3>
+<ul class="plain files">
+  <li><code>nginx/conf.d/default.conf</code>、<code>nginx/snippets/*.conf</code>: 門 1 とヘッダーの上書き、公開パス</li>
+  <li><code>compose.yaml</code>: oauth2-proxy と Keycloak の設定（URL の 2 面性、Cookie の寿命）</li>
+  <li><code>auth/keycloak/import/customer-realm.json</code>、<code>keycloak/import/staff-realm.json</code>: realm、client、mapper、ユーザー</li>
+  <li><code>web/bff/.../auth/SecurityConfig.kt</code>、<code>CurrentUser.kt</code>、<code>application.yml</code>: 門 2</li>
+  <li><code>authz/src/main/resources/application.yml</code>、<code>Policy.kt</code>: 門 3</li>
+  <li><code>auth/.../keycloak/KeycloakAdminClient.kt</code>: Admin API の呼び方</li>
+  <li><code>docs/architecture.md</code>「認証と認可」、<code>docs/design/0002</code>、<code>0005</code>: 文章での説明と判断の理由</li>
+</ul>
+</div>
+</div>
+
+<footer>この図は 2026-10-30 時点の <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a>（設計書 0005 の実装後）の設定から読み取ったものです。正は fullstack-lab の設計書（docs/design/0002、0005）と各設定ファイルで、認証・認可に関わる設定を変えたときは、この図も合わせて直します。</footer>
+</div>
+
+<script>
+(function () {
+  var KEY = 'fsl-auth-persona';
+  var cur = 'c';
+  try { var saved = localStorage.getItem(KEY); if (saved === 'c' || saved === 's') cur = saved; } catch (e) {}
+  function apply(p) {
+    cur = p;
+    document.documentElement.setAttribute('data-persona', p);
+    var attr = p === 'c' ? 'data-c' : 'data-s';
+    var els = document.querySelectorAll('[data-c]');
+    for (var i = 0; i < els.length; i++) {
+      var v = els[i].getAttribute(attr);
+      if (v !== null) els[i].textContent = v;
+    }
+    var btns = document.querySelectorAll('.persona button');
+    for (var j = 0; j < btns.length; j++) {
+      btns[j].setAttribute('aria-pressed', btns[j].getAttribute('data-persona') === p ? 'true' : 'false');
+    }
+    try { localStorage.setItem(KEY, p); } catch (e) {}
+  }
+  var buttons = document.querySelectorAll('.persona button');
+  for (var k = 0; k < buttons.length; k++) {
+    buttons[k].addEventListener('click', function (ev) { apply(ev.currentTarget.getAttribute('data-persona')); });
+  }
+  apply(cur);
+})();
+</script>
+
+</body>
+</html>
