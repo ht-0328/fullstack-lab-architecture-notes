@@ -1,4 +1,4 @@
-# architecture-notes
+# fullstack-lab-architecture-notes
 
 仕組みを理解するための図解と解説を置くリポジトリです。題材は学習用のタスク管理アプリ [fullstack-lab](https://github.com/ht-0328/fullstack-lab) で、そこで実際に動いている設定から読み取った構成を、人が読むための HTML にしています。
 
@@ -12,7 +12,7 @@ fullstack-lab の中に置かないのは、あちらの `docs/` が AI コー�
 
 ## 見方
 
-HTML をブラウザで開くだけです。フォントは Google Fonts から読み込みますが、読めなくても代替フォントで表示できます。GitHub 上では HTML はそのまま描画されないので、clone して開きます。
+GitHub Pages で公開しています: https://ht-0328.github.io/fullstack-lab-architecture-notes/ （main のルートからそのまま配信。`index.html` がページの一覧）。clone して HTML をブラウザで開いても同じです。フォントは Google Fonts から読み込みますが、読めなくても代替フォントで表示できます。
 
 ## 更新のきまり
 
