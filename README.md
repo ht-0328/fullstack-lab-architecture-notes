@@ -18,7 +18,7 @@ GitHub Pages で公開しています: https://ht-0328.github.io/fullstack-lab-a
 
 ## ページの書き方
 
-読者は「新しくチームに入った人」と「まだスキルの無い人」です。ぱっと見て全体像がつかめ、読み進めるほど詳しくなる作りにします。ここが決まりの正典で、AI エージェントがページを作る・直すときは fullstack-lab の `writing-architecture-notes` スキル（手順と確認方法）からここを参照します。
+読者は「新しくチームに入った人」と「まだスキルの無い人」です。ぱっと見て全体像がつかめ、読み進めるほど詳しくなる作りにします。ここが決まりの正典で、AI エージェントがページを作る・直すときは、このリポジトリのスキル [.agents/skills/writing-architecture-notes](.agents/skills/writing-architecture-notes/SKILL.md)（手順と確認方法）を使い、そこからここを参照します（仕組みは [.agents/README.md](.agents/README.md)）。
 
 ### 1. 最初の 1 画面で結論を言い切る
 
