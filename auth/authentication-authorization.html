@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- fullstack-lab の認証・認可（Keycloak、oauth2-proxy、Nginx、BFF、認可 API、認証 API）を図解する単体の HTML。
-     外部に依存するのは Google Fonts だけで、読めなくても代替フォントで表示できる。 -->
+     外部に依存するのは Google Fonts だけで、読めなくても代替フォントで表示できる。
+     アイコンは Font Awesome Free と Simple Icons の SVG パスを <body> 先頭の <symbol> に取り込み、<use> で参照する（出典はそこに書く）。 -->
 <title>fullstack-lab 認証・認可の図解</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -81,9 +82,7 @@ strong { font-weight: 700; }
 .bar .label { font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em; }
 .persona { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); gap: 3px; }
 .persona button { font: inherit; font-size: 13.5px; font-weight: 500; padding: 5px 14px; border-radius: 999px; border: 0; background: transparent; color: var(--fg); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-.persona button .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
-.persona button[data-persona="c"] .dot { background: var(--c); }
-.persona button[data-persona="s"] .dot { background: var(--s); }
+.persona button svg.ic { width: 14px; height: 14px; margin-right: 0; vertical-align: -2px; }
 .persona button[aria-pressed="true"] { background: var(--surface-2); font-weight: 700; }
 .persona button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .v { font-weight: 700; }
@@ -170,6 +169,16 @@ svg .tng { fill: var(--ng); }
 svg .gate { fill: var(--surface); stroke: currentColor; stroke-width: 1.5; }
 svg .gate-shadow { fill: currentColor; fill-opacity: 0.06; }
 
+/* アイコン: body 先頭の <symbol> を <use> で参照する。fill は文字色、クラスで経路の色にする */
+.ic { fill: currentColor; }
+.ic.c { fill: var(--c); } .ic.s { fill: var(--s); } .ic.k { fill: var(--k); } .ic.z { fill: var(--z); } .ic.au { fill: var(--au); }
+.ic.jwt { fill: var(--jwt); } .ic.m { fill: var(--muted); } .ic.ng { fill: var(--ng); }
+svg.ic { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; flex: none; }
+.legend { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 18px; margin: 14px 0 4px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 13.5px; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend li svg.ic { margin-right: 0; }
+.legend .w { color: var(--muted); margin: 0 2px; }
+
 /* 手順の一覧 */
 ol.steps { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; max-width: 62em; }
 ol.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; font-size: 14.5px; line-height: 1.75; }
@@ -228,12 +237,36 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 </head>
 <body>
 
+<!-- アイコンの定義。図と本文から <use href="#i-…"> で参照する。fill は <use> に付けたクラス（.ic .ic.k など）で決まる。
+     Font Awesome Free 6.7.2（solid）: globe, user, user-tie, users, cookie, lock, lock-open, key, stamp, passport, scale-balanced, database, user-plus
+       https://fontawesome.com — License https://fontawesome.com/license/free（Icons: CC BY 4.0）Copyright 2024 Fonticons, Inc.
+     Simple Icons 16.36.0: nginx, keycloak, nuxt
+       https://simpleicons.org — CC0 1.0。ロゴの扱いは各ブランドのガイドラインに従う -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-globe" viewBox="0 0 512 512"><path d="M352 256c0 22.2-1.2 43.6-3.3 64l-185.3 0c-2.2-20.4-3.3-41.8-3.3-64s1.2-43.6 3.3-64l185.3 0c2.2 20.4 3.3 41.8 3.3 64zm28.8-64l123.1 0c5.3 20.5 8.1 41.9 8.1 64s-2.8 43.5-8.1 64l-123.1 0c2.1-20.6 3.2-42 3.2-64s-1.1-43.4-3.2-64zm112.6-32l-116.7 0c-10-63.9-29.8-117.4-55.3-151.6c78.3 20.7 142 77.5 171.9 151.6zm-149.1 0l-176.6 0c6.1-36.4 15.5-68.6 27-94.7c10.5-23.6 22.2-40.7 33.5-51.5C239.4 3.2 248.7 0 256 0s16.6 3.2 27.8 13.8c11.3 10.8 23 27.9 33.5 51.5c11.6 26 20.9 58.2 27 94.7zm-209 0L18.6 160C48.6 85.9 112.2 29.1 190.6 8.4C165.1 42.6 145.3 96.1 135.3 160zM8.1 192l123.1 0c-2.1 20.6-3.2 42-3.2 64s1.1 43.4 3.2 64L8.1 320C2.8 299.5 0 278.1 0 256s2.8-43.5 8.1-64zM194.7 446.6c-11.6-26-20.9-58.2-27-94.6l176.6 0c-6.1 36.4-15.5 68.6-27 94.6c-10.5 23.6-22.2 40.7-33.5 51.5C272.6 508.8 263.3 512 256 512s-16.6-3.2-27.8-13.8c-11.3-10.8-23-27.9-33.5-51.5zM135.3 352c10 63.9 29.8 117.4 55.3 151.6C112.2 482.9 48.6 426.1 18.6 352l116.7 0zm358.1 0c-30 74.1-93.6 130.9-171.9 151.6c25.5-34.2 45.2-87.7 55.3-151.6l116.7 0z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 448 512"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></symbol>
+  <symbol id="i-user-tie" viewBox="0 0 448 512"><path d="M96 128a128 128 0 1 0 256 0A128 128 0 1 0 96 128zm94.5 200.2l18.6 31L175.8 483.1l-36-146.9c-2-8.1-9.8-13.4-17.9-11.3C51.9 342.4 0 405.8 0 481.3c0 17 13.8 30.7 30.7 30.7l131.7 0c0 0 0 0 .1 0l5.5 0 112 0 5.5 0c0 0 0 0 .1 0l131.7 0c17 0 30.7-13.8 30.7-30.7c0-75.5-51.9-138.9-121.9-156.4c-8.1-2-15.9 3.3-17.9 11.3l-36 146.9L238.9 359.2l18.6-31c6.4-10.7-1.3-24.2-13.7-24.2L224 304l-19.7 0c-12.4 0-20.1 13.6-13.7 24.2z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 640 512"><path d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192l42.7 0c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0L21.3 320C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7l42.7 0C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3l-213.3 0zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352l117.3 0C452.3 352 512 411.7 512 485.3c0 14.7-11.9 26.7-26.7 26.7l-330.7 0c-14.7 0-26.7-11.9-26.7-26.7z"/></symbol>
+  <symbol id="i-cookie" viewBox="0 0 512 512"><path d="M247.2 17c-22.1-3.1-44.6 .9-64.4 11.4l-74 39.5C89.1 78.4 73.2 94.9 63.4 115L26.7 190.6c-9.8 20.1-13 42.9-9.1 64.9l14.5 82.8c3.9 22.1 14.6 42.3 30.7 57.9l60.3 58.4c16.1 15.6 36.6 25.6 58.7 28.7l83 11.7c22.1 3.1 44.6-.9 64.4-11.4l74-39.5c19.7-10.5 35.6-27 45.4-47.2l36.7-75.5c9.8-20.1 13-42.9 9.1-64.9l-14.6-82.8c-3.9-22.1-14.6-42.3-30.7-57.9L388.9 57.5c-16.1-15.6-36.6-25.6-58.7-28.7L247.2 17zM208 144a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM144 336a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm224-64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 448 512"><path d="M144 144l0 48 160 0 0-48c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192l0-48C80 64.5 144.5 0 224 0s144 64.5 144 144l0 48 16 0c35.3 0 64 28.7 64 64l0 192c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 256c0-35.3 28.7-64 64-64l16 0z"/></symbol>
+  <symbol id="i-lock-open" viewBox="0 0 576 512"><path d="M352 144c0-44.2 35.8-80 80-80s80 35.8 80 80l0 48c0 17.7 14.3 32 32 32s32-14.3 32-32l0-48C576 64.5 511.5 0 432 0S288 64.5 288 144l0 48L64 192c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-192c0-35.3-28.7-64-64-64l-32 0 0-48z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 512 512"><path d="M336 352c97.2 0 176-78.8 176-176S433.2 0 336 0S160 78.8 160 176c0 18.7 2.9 36.8 8.3 53.7L7 391c-4.5 4.5-7 10.6-7 17l0 80c0 13.3 10.7 24 24 24l80 0c13.3 0 24-10.7 24-24l0-40 40 0c13.3 0 24-10.7 24-24l0-40 40 0c6.4 0 12.5-2.5 17-7l33.3-33.3c16.9 5.4 35 8.3 53.7 8.3zM376 96a40 40 0 1 1 0 80 40 40 0 1 1 0-80z"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 512 512"><path d="M312 201.8c0-17.4 9.2-33.2 19.9-47C344.5 138.5 352 118.1 352 96c0-53-43-96-96-96s-96 43-96 96c0 22.1 7.5 42.5 20.1 58.8c10.7 13.8 19.9 29.6 19.9 47c0 29.9-24.3 54.2-54.2 54.2L112 256C50.1 256 0 306.1 0 368c0 20.9 13.4 38.7 32 45.3L32 464c0 26.5 21.5 48 48 48l352 0c26.5 0 48-21.5 48-48l0-50.7c18.6-6.6 32-24.4 32-45.3c0-61.9-50.1-112-112-112l-33.8 0c-29.9 0-54.2-24.3-54.2-54.2zM416 416l0 32L96 448l0-32 320 0z"/></symbol>
+  <symbol id="i-passport" viewBox="0 0 448 512"><path d="M0 64C0 28.7 28.7 0 64 0L384 0c35.3 0 64 28.7 64 64l0 384c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zM183 278.8c-27.9-13.2-48.4-39.4-53.7-70.8l39.1 0c1.6 30.4 7.7 53.8 14.6 70.8zm41.3 9.2l-.3 0-.3 0c-2.4-3.5-5.7-8.9-9.1-16.5c-6-13.6-12.4-34.3-14.2-63.5l47.1 0c-1.8 29.2-8.1 49.9-14.2 63.5c-3.4 7.6-6.7 13-9.1 16.5zm40.7-9.2c6.8-17.1 12.9-40.4 14.6-70.8l39.1 0c-5.3 31.4-25.8 57.6-53.7 70.8zM279.6 176c-1.6-30.4-7.7-53.8-14.6-70.8c27.9 13.2 48.4 39.4 53.7 70.8l-39.1 0zM223.7 96l.3 0 .3 0c2.4 3.5 5.7 8.9 9.1 16.5c6 13.6 12.4 34.3 14.2 63.5l-47.1 0c1.8-29.2 8.1-49.9 14.2-63.5c3.4-7.6 6.7-13 9.1-16.5zM183 105.2c-6.8 17.1-12.9 40.4-14.6 70.8l-39.1 0c5.3-31.4 25.8-57.6 53.7-70.8zM352 192A128 128 0 1 0 96 192a128 128 0 1 0 256 0zM112 384c-8.8 0-16 7.2-16 16s7.2 16 16 16l224 0c8.8 0 16-7.2 16-16s-7.2-16-16-16l-224 0z"/></symbol>
+  <symbol id="i-scale-balanced" viewBox="0 0 640 512"><path d="M384 32l128 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L398.4 96c-5.2 25.8-22.9 47.1-46.4 57.3L352 448l160 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-192 0-192 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l160 0 0-294.7c-23.5-10.3-41.2-31.6-46.4-57.3L128 96c-17.7 0-32-14.3-32-32s14.3-32 32-32l128 0c14.6-19.4 37.8-32 64-32s49.4 12.6 64 32zm55.6 288l144.9 0L512 195.8 439.6 320zM512 416c-62.9 0-115.2-34-126-78.9c-2.6-11 1-22.3 6.7-32.1l95.2-163.2c5-8.6 14.2-13.8 24.1-13.8s19.1 5.3 24.1 13.8l95.2 163.2c5.7 9.8 9.3 21.1 6.7 32.1C627.2 382 574.9 416 512 416zM126.8 195.8L54.4 320l144.9 0L126.8 195.8zM.9 337.1c-2.6-11 1-22.3 6.7-32.1l95.2-163.2c5-8.6 14.2-13.8 24.1-13.8s19.1 5.3 24.1 13.8l95.2 163.2c5.7 9.8 9.3 21.1 6.7 32.1C242 382 189.7 416 126.8 416S11.7 382 .9 337.1z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 448 512"><path d="M448 80l0 48c0 44.2-100.3 80-224 80S0 172.2 0 128L0 80C0 35.8 100.3 0 224 0S448 35.8 448 80zM393.2 214.7c20.8-7.4 39.9-16.9 54.8-28.6L448 288c0 44.2-100.3 80-224 80S0 332.2 0 288L0 186.1c14.9 11.8 34 21.2 54.8 28.6C99.7 230.7 159.5 240 224 240s124.3-9.3 169.2-25.3zM0 346.1c14.9 11.8 34 21.2 54.8 28.6C99.7 390.7 159.5 400 224 400s124.3-9.3 169.2-25.3c20.8-7.4 39.9-16.9 54.8-28.6l0 85.9c0 44.2-100.3 80-224 80S0 476.2 0 432l0-85.9z"/></symbol>
+  <symbol id="i-user-plus" viewBox="0 0 640 512"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM504 312l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></symbol>
+  <symbol id="i-nginx" viewBox="0 0 24 24"><path d="M12 0L1.605 6v12L12 24l10.395-6V6L12 0zm6 16.59c0 .705-.646 1.29-1.529 1.29-.631 0-1.351-.255-1.801-.81l-6-7.141v6.66c0 .721-.57 1.29-1.274 1.29H7.32c-.721 0-1.29-.6-1.29-1.29V7.41c0-.705.63-1.29 1.5-1.29.646 0 1.38.255 1.83.81l5.97 7.141V7.41c0-.721.6-1.29 1.29-1.29h.075c.72 0 1.29.6 1.29 1.29v9.18H18z"/></symbol>
+  <symbol id="i-keycloak" viewBox="0 0 24 24"><path d="m18.742 1.182-12.493.002C4.155 4.784 2.079 8.393 0 12.002c2.071 3.612 4.162 7.214 6.252 10.816l12.49-.004 3.089-5.404h2.158v-.002H24L23.996 6.59h-2.168zM8.327 4.792h2.081l1.04 1.8-3.12 5.413 3.117 5.403-1.035 1.81H8.327a2047.566 2047.566 0 0 0-4.168-7.204C5.547 9.606 6.937 7.2 8.327 4.792Zm6.241 0 2.086.003c1.393 2.405 2.78 4.813 4.166 7.222l-4.167 7.2h-2.08c-.382-.562-1.038-1.808-1.038-1.808l3.123-5.405-3.124-5.413z"/></symbol>
+  <symbol id="i-nuxt" viewBox="0 0 24 24"><path d="M13.4642 19.8295h8.9218c.2834 0 .5618-.0723.8072-.2098a1.5899 1.5899 0 0 0 .5908-.5732 1.5293 1.5293 0 0 0 .216-.783 1.529 1.529 0 0 0-.2167-.7828L17.7916 7.4142a1.5904 1.5904 0 0 0-.5907-.573 1.6524 1.6524 0 0 0-.807-.2099c-.2833 0-.5616.0724-.807.2098a1.5904 1.5904 0 0 0-.5907.5731L13.4642 9.99l-2.9954-5.0366a1.5913 1.5913 0 0 0-.591-.573 1.6533 1.6533 0 0 0-.8071-.2098c-.2834 0-.5617.0723-.8072.2097a1.5913 1.5913 0 0 0-.591.573L.2168 17.4808A1.5292 1.5292 0 0 0 0 18.2635c-.0001.2749.0744.545.216.783a1.59 1.59 0 0 0 .5908.5732c.2454.1375.5238.2098.8072.2098h5.6003c2.219 0 3.8554-.9454 4.9813-2.7899l2.7337-4.5922L16.3935 9.99l4.3944 7.382h-5.8586ZM7.123 17.3694l-3.9083-.0009 5.8586-9.8421 2.9232 4.921-1.9572 3.2892c-.7478 1.1967-1.5972 1.6328-2.9163 1.6328z"/></symbol>
+</svg>
+
 <div class="wrap">
 <div class="bar"><div class="bar-in">
   <span class="label">誰としてたどるか（図と表の値が切り替わる）</span>
   <div class="persona" role="group" aria-label="利用者の切り替え">
-    <button type="button" id="persona-c" data-persona="c" aria-pressed="true"><span class="dot"></span>alice（一般利用者）</button>
-    <button type="button" id="persona-s" data-persona="s" aria-pressed="false"><span class="dot"></span>dave（社員 task-admin）</button>
+    <button type="button" id="persona-c" data-persona="c" aria-pressed="true"><svg class="ic c" aria-hidden="true"><use href="#i-user"/></svg>alice（一般利用者）</button>
+    <button type="button" id="persona-s" data-persona="s" aria-pressed="false"><svg class="ic s" aria-hidden="true"><use href="#i-user-tie"/></svg>dave（社員 task-admin）</button>
   </div>
 </div></div>
 
@@ -259,48 +292,54 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 
 <figure>
 <div class="fig-scroll">
-<svg viewBox="0 0 960 230" role="img" aria-label="リクエストが Nginx、BFF、認可 API の 3 つの門を順に通り、各門で落ちると 302 か 401、401、403 か 404 が返る" class="arch" style="min-width:640px">
+<svg viewBox="0 0 960 242" role="img" aria-label="リクエストが Nginx、BFF、認可 API の 3 つの門を順に通り、各門で落ちると 302 か 401、401、403 か 404 が返る" class="arch" style="min-width:640px">
   <defs>
     <marker id="arr-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
     <marker id="arr-g-ng" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-ng"/></marker>
   </defs>
-  <rect x="16" y="78" width="96" height="44" rx="8" class="box"/>
-  <text x="64" y="105" text-anchor="middle" class="t13">ブラウザ</text>
-  <line x1="112" y1="100" x2="186" y2="100" class="ln" marker-end="url(#arr-g)"/>
-  <text x="149" y="92" text-anchor="middle" class="t11 tm">Cookie</text>
+  <rect x="16" y="78" width="110" height="44" rx="8" class="box"/>
+  <use href="#i-globe" class="ic m" x="27" y="91" width="18" height="18"/>
+  <text x="84" y="105" text-anchor="middle" class="t13">ブラウザ</text>
+  <line x1="126" y1="100" x2="186" y2="100" class="ln" marker-end="url(#arr-g)"/>
+  <use href="#i-cookie" class="ic m" x="130" y="81" width="12" height="12"/>
+  <text x="146" y="92" text-anchor="start" class="t11 tm">Cookie</text>
 
-  <rect x="190" y="52" width="170" height="96" rx="10" class="gate-shadow" transform="translate(4,4)"/>
-  <rect x="190" y="52" width="170" height="96" rx="10" class="gate"/>
-  <text x="275" y="76" text-anchor="middle" class="t11 tm">門 1 ・ 認証（セッション）</text>
-  <text x="275" y="98" text-anchor="middle" class="t13">Nginx + oauth2-proxy</text>
-  <text x="275" y="118" text-anchor="middle" class="t12">ログイン済みか？</text>
-  <text x="275" y="136" text-anchor="middle" class="t11 tm">Cookie を復号できるか</text>
-  <line x1="275" y1="148" x2="275" y2="186" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
-  <text x="275" y="210" text-anchor="middle" class="t12 tng">302 ログイン画面へ / 401</text>
+  <rect x="190" y="40" width="170" height="118" rx="10" class="gate-shadow" transform="translate(4,4)"/>
+  <rect x="190" y="40" width="170" height="118" rx="10" class="gate"/>
+  <use href="#i-cookie" class="ic" x="264" y="50" width="22" height="22"/>
+  <text x="275" y="90" text-anchor="middle" class="t11 tm">門 1 ・ 認証（セッション）</text>
+  <text x="275" y="110" text-anchor="middle" class="t13">Nginx + oauth2-proxy</text>
+  <text x="275" y="128" text-anchor="middle" class="t12">ログイン済みか？</text>
+  <text x="275" y="146" text-anchor="middle" class="t11 tm">Cookie を復号できるか</text>
+  <line x1="275" y1="158" x2="275" y2="196" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
+  <text x="275" y="220" text-anchor="middle" class="t12 tng">302 ログイン画面へ / 401</text>
 
   <line x1="360" y1="100" x2="452" y2="100" class="ln jwt" marker-end="url(#arr-g)"/>
-  <text x="406" y="88" text-anchor="middle" class="t11 tj">JWT を付けて</text>
+  <use href="#i-passport" class="ic jwt" x="365" y="77" width="12" height="12"/>
+  <text x="381" y="88" text-anchor="start" class="t11 tj">JWT を付けて</text>
 
-  <rect x="456" y="52" width="170" height="96" rx="10" class="gate-shadow" transform="translate(4,4)"/>
-  <rect x="456" y="52" width="170" height="96" rx="10" class="gate"/>
-  <text x="541" y="76" text-anchor="middle" class="t11 tm">門 2 ・ トークンの検証</text>
-  <text x="541" y="98" text-anchor="middle" class="t13">BFF（Spring Security）</text>
-  <text x="541" y="118" text-anchor="middle" class="t12">その JWT は本物か？</text>
-  <text x="541" y="136" text-anchor="middle" class="t11 tm">署名・iss・aud・exp</text>
-  <line x1="541" y1="148" x2="541" y2="186" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
-  <text x="541" y="210" text-anchor="middle" class="t12 tng">401</text>
+  <rect x="456" y="40" width="170" height="118" rx="10" class="gate-shadow" transform="translate(4,4)"/>
+  <rect x="456" y="40" width="170" height="118" rx="10" class="gate"/>
+  <use href="#i-lock" class="ic" x="530" y="50" width="22" height="22"/>
+  <text x="541" y="90" text-anchor="middle" class="t11 tm">門 2 ・ トークンの検証</text>
+  <text x="541" y="110" text-anchor="middle" class="t13">BFF（Spring Security）</text>
+  <text x="541" y="128" text-anchor="middle" class="t12">その JWT は本物か？</text>
+  <text x="541" y="146" text-anchor="middle" class="t11 tm">署名・iss・aud・exp</text>
+  <line x1="541" y1="158" x2="541" y2="196" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
+  <text x="541" y="220" text-anchor="middle" class="t12 tng">401</text>
 
   <line x1="626" y1="100" x2="718" y2="100" class="ln" marker-end="url(#arr-g)"/>
   <text x="672" y="88" text-anchor="middle" class="t11 tm">主体・操作・対象</text>
 
-  <rect x="722" y="52" width="170" height="96" rx="10" class="gate-shadow" transform="translate(4,4)"/>
-  <rect x="722" y="52" width="170" height="96" rx="10" class="gate"/>
-  <text x="807" y="76" text-anchor="middle" class="t11 tm">門 3 ・ 認可</text>
-  <text x="807" y="98" text-anchor="middle" class="t13">認可 API（Policy.kt）</text>
-  <text x="807" y="118" text-anchor="middle" class="t12">この操作をしてよいか？</text>
-  <text x="807" y="136" text-anchor="middle" class="t11 tm">種別・ロール・所有者</text>
-  <line x1="807" y1="148" x2="807" y2="186" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
-  <text x="807" y="210" text-anchor="middle" class="t12 tng">403 / 404（存在を隠す）</text>
+  <rect x="722" y="40" width="170" height="118" rx="10" class="gate-shadow" transform="translate(4,4)"/>
+  <rect x="722" y="40" width="170" height="118" rx="10" class="gate"/>
+  <use href="#i-scale-balanced" class="ic" x="796" y="50" width="22" height="22"/>
+  <text x="807" y="90" text-anchor="middle" class="t11 tm">門 3 ・ 認可</text>
+  <text x="807" y="110" text-anchor="middle" class="t13">認可 API（Policy.kt）</text>
+  <text x="807" y="128" text-anchor="middle" class="t12">この操作をしてよいか？</text>
+  <text x="807" y="146" text-anchor="middle" class="t11 tm">種別・ロール・所有者</text>
+  <line x1="807" y1="158" x2="807" y2="196" class="ln" style="stroke:var(--ng)" marker-end="url(#arr-g-ng)"/>
+  <text x="807" y="220" text-anchor="middle" class="t12 tng">403 / 404（存在を隠す）</text>
 
   <line x1="892" y1="100" x2="944" y2="100" class="ln" style="stroke:var(--ok)" marker-end="url(#arr-g)"/>
   <text x="918" y="88" text-anchor="middle" class="t11 tok">API へ</text>
@@ -310,15 +349,15 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 </figure>
 
 <div class="gates">
-  <div class="gate-card"><h3>門 1 ・ Nginx + oauth2-proxy</h3>
+  <div class="gate-card"><h3><svg class="ic" aria-hidden="true"><use href="#i-cookie"/></svg>門 1 ・ Nginx + oauth2-proxy</h3>
     <div class="q">ログイン済みか？</div>
     Nginx は転送する前に <code>auth_request</code> で oauth2-proxy に Cookie を見せる。oauth2-proxy が Cookie を復号できれば 202 と JWT を返し、できなければ 401。AWS では ALB の認証アクションがこの門。
     <div class="fail">落ちると: 画面は 302 でログイン画面へ、<code>/bff/*</code> は 401 の JSON</div></div>
-  <div class="gate-card"><h3>門 2 ・ BFF</h3>
+  <div class="gate-card"><h3><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>門 2 ・ BFF</h3>
     <div class="q">その JWT は本物か？</div>
     前段を信じ切らず、Keycloak の公開鍵で署名を検証し、<code>iss</code>・<code>aud</code>・<code>exp</code> を確かめる。知らない発行元は拒否。通ったら <code>CurrentUser</code>（sub、種別、ロール）を組み立てる。
     <div class="fail">落ちると: 401。スモークテストは偽の JWT を BFF に直接送って 401 を確認している</div></div>
-  <div class="gate-card"><h3>門 3 ・ 認可 API</h3>
+  <div class="gate-card"><h3><svg class="ic z" aria-hidden="true"><use href="#i-scale-balanced"/></svg>門 3 ・ 認可 API</h3>
     <div class="q">この操作をしてよいか？</div>
     BFF が主体（sub、種別、ロール）・操作（<code>task:read</code> など）・対象（所有者）を送り、<code>allowed</code> と理由を受け取る。既定で拒否。認可 API が落ちたら 503 で拒否（fail-closed）。
     <div class="fail">落ちると: 登録は 403、他人の詳細は 404（存在を知らせない）</div></div>
@@ -327,6 +366,22 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 <!-- ======================================================================= -->
 <h2 id="cast"><span class="no">02</span>登場人物と役割</h2>
 <p>Keycloak は「ユーザーを預かり、パスワードを確認し、JWT を発行する」役だけです。ログイン画面へ飛ばしたり Cookie を持ったりはせず、それは oauth2-proxy の仕事。JWT を検証するのは BFF、可否を決めるのは認可 API。同じ Nuxt と BFF を一般利用者と社員で共有し、入口のホスト名でだけ経路が分かれます。</p>
+
+<ul class="legend" aria-label="図中のアイコンの意味">
+  <li><svg class="ic m" aria-hidden="true"><use href="#i-globe"/></svg>ブラウザ</li>
+  <li><svg class="ic c" aria-hidden="true"><use href="#i-user"/></svg>一般利用者<span class="w">/</span><svg class="ic s" aria-hidden="true"><use href="#i-user-tie"/></svg>社員</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-nginx"/></svg>Nginx（入口。ホスト名で振り分け）</li>
+  <li><svg class="ic c" aria-hidden="true"><use href="#i-cookie"/></svg>oauth2-proxy（セッション Cookie。門 1）</li>
+  <li><svg class="ic k" aria-hidden="true"><use href="#i-keycloak"/></svg>Keycloak（IdP。パスワード確認と JWT 発行）</li>
+  <li><svg class="ic c" aria-hidden="true"><use href="#i-users"/></svg>realm（ユーザーと鍵の区画）</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-nuxt"/></svg>Nuxt（画面、SSR）</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>BFF（JWT の検証。門 2）</li>
+  <li><svg class="ic z" aria-hidden="true"><use href="#i-scale-balanced"/></svg>認可 API（可否の判定。門 3）</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg>API（業務データ）</li>
+  <li><svg class="ic au" aria-hidden="true"><use href="#i-user-plus"/></svg>認証 API（ユーザーの作成、パスワード変更）</li>
+  <li><svg class="ic jwt" aria-hidden="true"><use href="#i-passport"/></svg>JWT（Keycloak が発行する身分証）</li>
+  <li><svg class="ic k" aria-hidden="true"><use href="#i-key"/></svg>署名鍵<span class="w">/</span><svg class="ic k" aria-hidden="true"><use href="#i-stamp"/></svg>署名</li>
+</ul>
 
 <figure>
 <div class="fig-scroll">
@@ -347,13 +402,15 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 
   <!-- ブラウザ -->
   <rect x="20" y="330" width="110" height="60" rx="8" class="box"/>
-  <text x="75" y="356" text-anchor="middle" class="t13">ブラウザ</text>
+  <use href="#i-globe" class="ic m" x="28" y="343" width="16" height="16"/>
+  <text x="86" y="356" text-anchor="middle" class="t13">ブラウザ</text>
   <text x="75" y="374" text-anchor="middle" class="t11 tm">暗号化 Cookie を持つ</text>
   <line x1="130" y1="360" x2="176" y2="360" class="ln" marker-end="url(#arr-a)"/>
 
   <!-- Nginx -->
   <rect x="180" y="110" width="130" height="460" rx="10" class="box"/>
-  <text x="245" y="130" text-anchor="middle" class="t13">Nginx</text>
+  <use href="#i-nginx" class="ic" x="212" y="118" width="15" height="15"/>
+  <text x="256" y="130" text-anchor="middle" class="t13">Nginx</text>
   <text x="245" y="144" text-anchor="middle" class="t11 tm">ALB の代替</text>
   <rect x="190" y="150" width="110" height="52" rx="6" class="box c"/>
   <text x="245" y="171" text-anchor="middle" class="t12 mono">localhost</text>
@@ -369,45 +426,50 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
   <!-- 一般利用者の経路 -->
   <line x1="300" y1="176" x2="396" y2="176" class="ln c" marker-end="url(#arr-a-c)"/>
   <text x="348" y="168" text-anchor="middle" class="t11 tc">auth_request</text>
-  <rect x="400" y="150" width="160" height="52" rx="8" class="box c"/>
-  <text x="480" y="171" text-anchor="middle" class="t12 mono">oauth2-proxy-customer</text>
-  <text x="480" y="188" text-anchor="middle" class="t11 tc">Cookie _fsl_customer</text>
-  <line x1="560" y1="176" x2="816" y2="176" class="ln c" marker-end="url(#arr-a-c)"/>
+  <rect x="400" y="150" width="200" height="52" rx="8" class="box c"/>
+  <use href="#i-cookie" class="ic c" x="409" y="168" width="16" height="16"/>
+  <text x="511" y="171" text-anchor="middle" class="t12 mono">oauth2-proxy-customer</text>
+  <text x="511" y="188" text-anchor="middle" class="t11 tc">Cookie _fsl_customer</text>
+  <line x1="600" y1="176" x2="816" y2="176" class="ln c" marker-end="url(#arr-a-c)"/>
   <text x="688" y="156" text-anchor="middle" class="t11 tc">code をトークンと交換</text>
   <text x="688" y="170" text-anchor="middle" class="t11 tc">公開鍵の取得（keycloak:8080）</text>
 
   <!-- 社員の経路 -->
   <line x1="300" y1="526" x2="396" y2="526" class="ln s" marker-end="url(#arr-a-s)"/>
   <text x="348" y="518" text-anchor="middle" class="t11 ts">auth_request</text>
-  <rect x="400" y="500" width="160" height="52" rx="8" class="box s"/>
-  <text x="480" y="521" text-anchor="middle" class="t12 mono">oauth2-proxy-staff</text>
-  <text x="480" y="538" text-anchor="middle" class="t11 ts">Cookie _fsl_staff</text>
-  <polyline points="560,526 1080,526 1080,270" class="ln s" marker-end="url(#arr-a-s)"/>
+  <rect x="400" y="500" width="200" height="52" rx="8" class="box s"/>
+  <use href="#i-cookie" class="ic s" x="409" y="518" width="16" height="16"/>
+  <text x="511" y="521" text-anchor="middle" class="t12 mono">oauth2-proxy-staff</text>
+  <text x="511" y="538" text-anchor="middle" class="t11 ts">Cookie _fsl_staff</text>
+  <polyline points="600,526 1080,526 1080,270" class="ln s" marker-end="url(#arr-a-s)"/>
   <text x="800" y="506" text-anchor="middle" class="t11 ts">code をトークンと交換</text>
   <text x="800" y="520" text-anchor="middle" class="t11 ts">公開鍵の取得（keycloak:8080）</text>
 
   <!-- Nginx → BFF（JWT） -->
   <line x1="310" y1="352" x2="536" y2="352" class="ln jwt" marker-end="url(#arr-a-j)"/>
-  <text x="423" y="344" text-anchor="middle" class="t11 tj">x-amzn-oidc-accesstoken: JWT</text>
+  <use href="#i-passport" class="ic jwt" x="332" y="333" width="12" height="12"/>
+  <text x="348" y="344" text-anchor="start" class="t11 tj">x-amzn-oidc-accesstoken: JWT</text>
 
   <!-- Nginx → Nuxt -->
   <line x1="310" y1="456" x2="396" y2="456" class="ln" marker-end="url(#arr-a)"/>
   <text x="353" y="448" text-anchor="middle" class="t11 tm">画面</text>
   <rect x="400" y="430" width="160" height="52" rx="8" class="box"/>
-  <text x="480" y="451" text-anchor="middle" class="t13">Nuxt（SSR）</text>
+  <use href="#i-nuxt" class="ic" x="430" y="439" width="16" height="16"/>
+  <text x="493" y="451" text-anchor="middle" class="t13">Nuxt（SSR）</text>
   <text x="480" y="468" text-anchor="middle" class="t11 tm">JWT をそのまま転送</text>
   <line x1="560" y1="442" x2="596" y2="388" class="ln jwt" marker-end="url(#arr-a-j)"/>
   <text x="604" y="420" text-anchor="start" class="t11 tj">SSR 中は直接 bff:8080</text>
 
   <!-- BFF -->
   <rect x="540" y="320" width="150" height="64" rx="8" class="box"/>
-  <text x="615" y="342" text-anchor="middle" class="t13">BFF</text>
+  <use href="#i-lock" class="ic" x="589" y="329" width="14" height="14"/>
+  <text x="624" y="342" text-anchor="middle" class="t13">BFF</text>
   <text x="615" y="359" text-anchor="middle" class="t11 tj">JWT を検証（門 2）</text>
   <text x="615" y="374" text-anchor="middle" class="t11 tm">CurrentUser を作る</text>
 
   <!-- BFF → 公開鍵 -->
   <polyline points="615,320 615,292 850,292 850,270" class="ln k thin" marker-end="url(#arr-a-k)"/>
-  <text x="745" y="284" text-anchor="middle" class="t11 tk">公開鍵（JWKS）を取得。realm ごと、初回だけ</text>
+  <text x="730" y="284" text-anchor="middle" class="t11 tk">公開鍵（JWKS）を取得。realm ごと、初回だけ</text>
 
   <!-- BFF → 内部 API 群 -->
   <line x1="690" y1="352" x2="716" y2="352" class="ln"/>
@@ -420,13 +482,16 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
   <text x="766" y="426" text-anchor="middle" class="t11 tau">アカウント操作</text>
 
   <rect x="820" y="320" width="140" height="44" rx="8" class="box z"/>
-  <text x="890" y="338" text-anchor="middle" class="t13">認可 API</text>
+  <use href="#i-scale-balanced" class="ic z" x="850" y="326" width="15" height="15"/>
+  <text x="901" y="338" text-anchor="middle" class="t13">認可 API</text>
   <text x="890" y="354" text-anchor="middle" class="t11 tm">判定だけ（門 3）</text>
   <rect x="820" y="366" width="140" height="44" rx="8" class="box"/>
-  <text x="890" y="384" text-anchor="middle" class="t13">API</text>
+  <use href="#i-database" class="ic" x="866" y="372" width="14" height="14"/>
+  <text x="899" y="384" text-anchor="middle" class="t13">API</text>
   <text x="890" y="400" text-anchor="middle" class="t11 tm">BFF を信頼。認可しない</text>
   <rect x="820" y="412" width="140" height="44" rx="8" class="box au"/>
-  <text x="890" y="430" text-anchor="middle" class="t13">認証 API</text>
+  <use href="#i-user-plus" class="ic au" x="849" y="418" width="16" height="16"/>
+  <text x="902" y="430" text-anchor="middle" class="t13">認証 API</text>
   <text x="890" y="446" text-anchor="middle" class="t11 tm">Keycloak の代行</text>
   <polyline points="960,434 975,434 975,270" class="ln k" marker-end="url(#arr-a-k)"/>
   <text x="982" y="350" text-anchor="start" class="t11 tk">Admin REST API</text>
@@ -434,10 +499,12 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 
   <!-- Keycloak -->
   <rect x="820" y="30" width="350" height="236" rx="10" class="box k"/>
-  <text x="995" y="48" text-anchor="middle" class="t13">Keycloak</text>
+  <use href="#i-keycloak" class="ic k" x="952" y="36" width="15" height="15"/>
+  <text x="1006" y="48" text-anchor="middle" class="t13">Keycloak</text>
   <text x="995" y="61" text-anchor="middle" class="t11 tm">IdP。ユーザーと鍵を預かる</text>
   <rect x="830" y="68" width="160" height="180" rx="6" class="box c"/>
-  <text x="910" y="86" text-anchor="middle" class="t12 mono">realm customer</text>
+  <use href="#i-users" class="ic c" x="845" y="76" width="13" height="13"/>
+  <text x="918" y="86" text-anchor="middle" class="t12 mono">realm customer</text>
   <text x="838" y="104" text-anchor="start" class="t11">users: alice, bob</text>
   <text x="838" y="118" text-anchor="start" class="t11 tm">+ 会員登録した人</text>
   <text x="838" y="136" text-anchor="start" class="t11">role: customer</text>
@@ -445,10 +512,12 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
   <text x="838" y="168" text-anchor="start" class="t11 mono">fullstack-lab-customer</text>
   <text x="838" y="182" text-anchor="start" class="t11 mono">auth-api（SA）</text>
   <text x="838" y="200" text-anchor="start" class="t11">mapper: audience</text>
-  <text x="838" y="218" text-anchor="start" class="t11">署名鍵 RS256</text>
+  <use href="#i-key" class="ic k" x="838" y="208" width="11" height="11"/>
+  <text x="853" y="218" text-anchor="start" class="t11">署名鍵 RS256</text>
   <text x="838" y="234" text-anchor="start" class="t11 tm">iss …/realms/customer</text>
   <rect x="1000" y="68" width="160" height="180" rx="6" class="box s"/>
-  <text x="1080" y="86" text-anchor="middle" class="t12 mono">realm staff</text>
+  <use href="#i-users" class="ic s" x="1029" y="76" width="13" height="13"/>
+  <text x="1091" y="86" text-anchor="middle" class="t12 mono">realm staff</text>
   <text x="1080" y="100" text-anchor="middle" class="t11 ts">Okta の代替</text>
   <text x="1008" y="118" text-anchor="start" class="t11">users: carol, dave</text>
   <text x="1008" y="133" text-anchor="start" class="t11">group: task-viewer</text>
@@ -456,7 +525,8 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
   <text x="1008" y="166" text-anchor="start" class="t11">client:</text>
   <text x="1008" y="180" text-anchor="start" class="t11 mono">fullstack-lab-staff</text>
   <text x="1008" y="198" text-anchor="start" class="t11">mapper: audience, groups</text>
-  <text x="1008" y="216" text-anchor="start" class="t11">署名鍵 RS256</text>
+  <use href="#i-key" class="ic k" x="1008" y="206" width="11" height="11"/>
+  <text x="1023" y="216" text-anchor="start" class="t11">署名鍵 RS256</text>
   <text x="1008" y="232" text-anchor="start" class="t11 tm">iss …/realms/staff</text>
 </svg>
 </div>
@@ -504,22 +574,28 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 <text x="14" y="531" text-anchor="start" font-size="11" font-weight="700" class="phase">D. 認証済みの画面取得</text>
 <line x1="230" y1="52" x2="230" y2="848" class="life"/>
 <rect x="164" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="230" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
+<use href="#i-globe" class="ic m" x="174" y="27" width="16" height="16"/>
+<text x="243" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
 <line x1="390" y1="52" x2="390" y2="848" class="life"/>
 <rect x="324" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="390" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
+<use href="#i-nginx" class="ic" x="334" y="27" width="16" height="16"/>
+<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
 <line x1="550" y1="52" x2="550" y2="848" class="life"/>
 <rect x="484" y="18" width="132" height="34" rx="6" class="pbox lane-p"/>
-<text x="550" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
+<use href="#i-cookie" class="ic c" x="494" y="27" width="16" height="16"/>
+<text x="563" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
 <line x1="710" y1="52" x2="710" y2="848" class="life"/>
 <rect x="644" y="18" width="132" height="34" rx="6" class="pbox lane-k"/>
-<text x="710" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
+<use href="#i-keycloak" class="ic k" x="654" y="27" width="16" height="16"/>
+<text x="723" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
 <line x1="870" y1="52" x2="870" y2="848" class="life"/>
 <rect x="804" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="870" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nuxt</text>
+<use href="#i-nuxt" class="ic" x="814" y="27" width="16" height="16"/>
+<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nuxt</text>
 <line x1="1030" y1="52" x2="1030" y2="848" class="life"/>
 <rect x="964" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="1030" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
+<use href="#i-lock" class="ic" x="974" y="27" width="16" height="16"/>
+<text x="1043" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
 <line x1="230" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-l)"/>
 <text x="310" y="77" text-anchor="middle" font-size="12" class="msglabel " data-c="① GET http://localhost:8080/" data-s="① GET http://admin.localhost:8080/">① GET http://localhost:8080/</text>
 <line x1="390" y1="122" x2="550" y2="122" class="msg" marker-end="url(#arr-l)"/>
@@ -638,17 +714,26 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
     <marker id="arr-s-j" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker>
   </defs>
   <rect x="20" y="40" width="220" height="100" rx="10" class="box k"/>
-  <text x="130" y="64" text-anchor="middle" class="t13">Keycloak（realm）</text>
-  <text x="130" y="86" text-anchor="middle" class="t12">秘密鍵 🔒  …  公開鍵 🔓</text>
+  <use href="#i-keycloak" class="ic k" x="58" y="52" width="15" height="15"/>
+  <text x="79" y="64" text-anchor="start" class="t13">Keycloak（realm）</text>
+  <use href="#i-key" class="ic k" x="53" y="75" width="13" height="13"/>
+  <use href="#i-lock" class="ic k" x="68" y="75" width="12" height="12"/>
+  <text x="85" y="86" text-anchor="start" class="t12">秘密鍵</text>
+  <use href="#i-key" class="ic m" x="139" y="75" width="13" height="13"/>
+  <use href="#i-lock-open" class="ic m" x="154" y="75" width="13" height="13"/>
+  <text x="172" y="86" text-anchor="start" class="t12">公開鍵</text>
   <text x="130" y="106" text-anchor="middle" class="t11 tm">秘密鍵は外に出ない</text>
   <text x="130" y="124" text-anchor="middle" class="t11 tm">公開鍵は /certs（JWKS）で配る</text>
 
   <line x1="240" y1="70" x2="396" y2="70" class="ln jwt" marker-end="url(#arr-s-j)"/>
-  <text x="318" y="62" text-anchor="middle" class="t11 tj">秘密鍵で署名した JWT</text>
+  <use href="#i-stamp" class="ic jwt" x="248" y="51" width="12" height="12"/>
+  <use href="#i-passport" class="ic jwt" x="264" y="51" width="12" height="12"/>
+  <text x="280" y="62" text-anchor="start" class="t11 tj">秘密鍵で署名した JWT</text>
   <text x="318" y="86" text-anchor="middle" class="t11 tm">（Cookie → Nginx 経由）</text>
 
   <rect x="400" y="40" width="200" height="100" rx="10" class="box"/>
-  <text x="500" y="64" text-anchor="middle" class="t13">BFF</text>
+  <use href="#i-lock" class="ic" x="474" y="52" width="14" height="14"/>
+  <text x="509" y="64" text-anchor="middle" class="t13">BFF</text>
   <text x="500" y="86" text-anchor="middle" class="t12">公開鍵で署名を検証</text>
   <text x="500" y="106" text-anchor="middle" class="t11 tm">NimbusJwtDecoder.withJwkSetUri</text>
   <text x="500" y="124" text-anchor="middle" class="t11 tm">+ iss、aud、exp の検証器</text>
@@ -680,22 +765,28 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 <text x="14" y="493" text-anchor="start" font-size="11" font-weight="700" class="phase">拒否された場合</text>
 <line x1="230" y1="52" x2="230" y2="544" class="life"/>
 <rect x="164" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="230" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
+<use href="#i-globe" class="ic m" x="174" y="27" width="16" height="16"/>
+<text x="243" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
 <line x1="390" y1="52" x2="390" y2="544" class="life"/>
 <rect x="324" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="390" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
+<use href="#i-nginx" class="ic" x="334" y="27" width="16" height="16"/>
+<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
 <line x1="550" y1="52" x2="550" y2="544" class="life"/>
 <rect x="484" y="18" width="132" height="34" rx="6" class="pbox lane-p"/>
-<text x="550" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
+<use href="#i-cookie" class="ic c" x="494" y="27" width="16" height="16"/>
+<text x="563" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
 <line x1="710" y1="52" x2="710" y2="544" class="life"/>
 <rect x="644" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="710" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
+<use href="#i-lock" class="ic" x="654" y="27" width="16" height="16"/>
+<text x="723" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
 <line x1="870" y1="52" x2="870" y2="544" class="life"/>
 <rect x="804" y="18" width="132" height="34" rx="6" class="pbox lane-z"/>
-<text x="870" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">認可 API</text>
+<use href="#i-scale-balanced" class="ic z" x="814" y="27" width="16" height="16"/>
+<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">認可 API</text>
 <line x1="1030" y1="52" x2="1030" y2="544" class="life"/>
 <rect x="964" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="1030" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">API</text>
+<use href="#i-database" class="ic" x="974" y="27" width="16" height="16"/>
+<text x="1043" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">API</text>
 <line x1="230" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-z)"/>
 <text x="310" y="77" text-anchor="middle" font-size="12" class="msglabel ">① GET /bff/tasks/1（Cookie つき）</text>
 <line x1="390" y1="122" x2="550" y2="122" class="msg" marker-end="url(#arr-z)"/>
@@ -782,19 +873,24 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
 <defs><marker id="arr-u" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="arr-u-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker><marker id="arr-u-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ok"/></marker><marker id="arr-u-ng" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-ng"/></marker></defs>
 <line x1="230" y1="52" x2="230" y2="506" class="life"/>
 <rect x="164" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="230" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
+<use href="#i-globe" class="ic m" x="174" y="27" width="16" height="16"/>
+<text x="243" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
 <line x1="390" y1="52" x2="390" y2="506" class="life"/>
 <rect x="324" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="390" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
+<use href="#i-nginx" class="ic" x="334" y="27" width="16" height="16"/>
+<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
 <line x1="550" y1="52" x2="550" y2="506" class="life"/>
 <rect x="484" y="18" width="132" height="34" rx="6" class="pbox "/>
-<text x="550" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
+<use href="#i-lock" class="ic" x="494" y="27" width="16" height="16"/>
+<text x="563" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
 <line x1="710" y1="52" x2="710" y2="506" class="life"/>
 <rect x="644" y="18" width="132" height="34" rx="6" class="pbox lane-au"/>
-<text x="710" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">認証 API</text>
+<use href="#i-user-plus" class="ic au" x="654" y="27" width="16" height="16"/>
+<text x="723" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">認証 API</text>
 <line x1="870" y1="52" x2="870" y2="506" class="life"/>
 <rect x="804" y="18" width="132" height="34" rx="6" class="pbox lane-k"/>
-<text x="870" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
+<use href="#i-keycloak" class="ic k" x="814" y="27" width="16" height="16"/>
+<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
 <line x1="230" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-u)"/>
 <text x="310" y="77" text-anchor="middle" font-size="12" class="msglabel ">① POST /bff/signup（未認証）</text>
 <rect x="225" y="109" width="330" height="24" rx="5" class="note "/>

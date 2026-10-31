@@ -20,4 +20,5 @@ GitHub Pages で公開しています: https://ht-0328.github.io/fullstack-lab-a
 - 各ページは、その時点の fullstack-lab の設定（Nginx、compose、Keycloak の realm、BFF、認可 API、認証 API）から読み取ったものです。設定を変えたら、該当するページも直します。
 - 正は fullstack-lab 側の設計書（`docs/design/`）と設定ファイルです。食い違ったときはそちらに合わせます。
 - 図は外部のライブラリに頼らず、HTML の中に SVG で書いています。直すときはその SVG を直接編集します。
-- AWS のサービスとグループ枠のアイコンは [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)（2026-07-31 版のパッケージ、2026-10-31 に取得）から、使うものだけを `assets/aws-icons/` に改変せず置き、SVG の `<image href>` で参照しています。利用条件は配布ページの記載に従います。Keycloak、Okta、GitHub など AWS 以外のものは枠だけで描きます。
+- AWS のサービスとグループ枠のアイコンは [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)（2026-07-31 版のパッケージ、2026-10-31 に取得）から、使うものだけを `assets/aws-icons/` に改変せず置き、SVG の `<image href>` で参照しています。利用条件は配布ページの記載に従います。AWS のページでは、Keycloak、Okta、GitHub など AWS 以外のものは枠だけで描きます。
+- 認証・認可のページでは、仕組みの部品（利用者、Cookie、鍵、錠前、JWT、判定、データ）を [Font Awesome Free](https://fontawesome.com/) 6.7.2（アイコンは CC BY 4.0）から、製品のロゴ（Keycloak、NGINX、Nuxt）を [Simple Icons](https://simpleicons.org/) 16.36.0（CC0 1.0）から取っています。色を CSS で経路ごとに変えるため、ファイルは置かず、SVG のパスを HTML の `<body>` 先頭の `<symbol>` に取り込んで `<use>` で参照します。使ったアイコンの一覧と出典はその `<symbol>` の直前のコメントにあり、同じ意味には同じアイコンを使います（凡例は「登場人物と役割」の節）。ロゴの扱いは各ブランドのガイドラインに従います。
