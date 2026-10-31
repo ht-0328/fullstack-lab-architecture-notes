@@ -59,7 +59,7 @@
 </div></div>
 
 <h1>fullstack-lab 認証・認可の図解</h1>
-<p class="lead">ログインしてから画面が出るまでに、誰が「本人か」を確かめ、誰が「してよいか」を決めているかを、このリポジトリの実際の設定で追います。登場するのは、ログイン画面と身分証（JWT）を出す Keycloak、入口で見張る Nginx と oauth2-proxy、身分証を検める BFF、やってよいかを判定する認可 API です。最初の 2 節だけで全体像がつかめ、先に進むほど設定の中身に入ります。</p>
+<p class="lead">ログインしてから画面が出るまでに、誰が「本人か」を確かめ、誰が「してよいか」を決めているかを、このリポジトリの実際の設定で追います。登場するのは、ログイン画面と身分証（JWT）を出す Keycloak、入口で見張る Nginx（受付）と oauth2-proxy（確認係）、身分証を検める BFF、やってよいかを判定する認可 API です。最初の 2 節だけで全体像がつかめ、先に進むほど設定の中身に入ります。</p>
 
 <div class="howto" aria-label="この資料の読み方">
   <div class="lv l1"><b>層 1 ・ 全体像</b><span>5 分。01 と 02。「3 つの門」と登場人物、8 つの言葉だけ覚えれば会話についていける</span></div>
@@ -155,7 +155,7 @@
 <div class="cards">
   <div class="card"><h3><svg class="ic" aria-hidden="true"><use href="#i-cookie"/></svg>門 1 ・ Nginx + oauth2-proxy</h3>
     <div class="q">ログイン済みか？</div>
-    Nginx は転送する前に <code>auth_request</code> で oauth2-proxy に Cookie を見せる。oauth2-proxy が Cookie を復号できれば 202 と JWT を返し、できなければ 401。AWS では ALB の認証アクションがこの門。
+    受付（Nginx）が確認係（oauth2-proxy）に札（Cookie）を見せる段。Nginx は転送する前に <code>auth_request</code> で oauth2-proxy に Cookie を見せる。oauth2-proxy が Cookie を復号できれば 202 と JWT を返し、できなければ 401。AWS では ALB の認証アクションがこの門。
     <div class="fail">落ちると: 画面は 302 でログイン画面へ、<code>/bff/*</code> は 401 の JSON</div></div>
   <div class="card"><h3><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>門 2 ・ BFF</h3>
     <div class="q">その JWT は本物か？</div>
@@ -190,14 +190,15 @@
 
 
 <h3>まず覚える言葉（8 つ）</h3>
+<p>言葉に自信が無ければ、先に <a href="../basics/login-basics.html">ログインの仕組みの基礎</a>（札、受付、確認係、窓口、身分証のたとえ）を読んでください。</p>
 <ul class="glossary">
   <li><b>認証</b><span>「あなたは誰か」を確かめること。ID とパスワードの確認。ここでは Keycloak がする</span></li>
   <li><b>認可</b><span>「その人がこの操作をしてよいか」を決めること。ここでは認可 API がする</span></li>
-  <li><b>IdP</b><span>Identity Provider。ユーザーを預かり、認証して身分証を出す役。ローカルは Keycloak、AWS では社員向けが Okta</span></li>
-  <li><b>JWT</b><span>ログインした人の身分証。「誰か、いつまで有効か」が書かれ、IdP の署名つき。BFF はこれを見て人を判断する</span></li>
-  <li><b>署名と公開鍵</b><span>IdP が秘密鍵で押す印と、誰でも使える検証用の鍵。公開鍵で検めれば、偽物や改ざんが分かる</span></li>
-  <li><b>セッション Cookie</b><span>ブラウザが持つ「ログイン済み」のしるし。中身は暗号化されていて、JWT そのものは入っていない</span></li>
-  <li><b>realm</b><span>Keycloak の中の区画。ユーザー・鍵・設定がまるごと別になる。一般利用者用と社員用の 2 つ</span></li>
+  <li><b>Cookie（札）</b><span>ブラウザが持たされる「ログイン済み」の札。キャッシュではない。中身は暗号化されていて、JWT そのものは入っていない</span></li>
+  <li><b>Nginx（受付）</b><span>全部のリクエストを最初に受け、URL を見て Nuxt や BFF に渡す。渡す前に oauth2-proxy へ「ログイン済み？」と聞く</span></li>
+  <li><b>oauth2-proxy（確認係）</b><span>ログインの手続きを引き受ける小さなプログラム。初回は Keycloak へ案内して札を作り、以後は札が有効かを答える</span></li>
+  <li><b>Keycloak（窓口、IdP）</b><span>ユーザーを預かり、ID とパスワードを確かめ、身分証（JWT）を出す。AWS では社員向けが Okta になる</span></li>
+  <li><b>JWT（身分証）</b><span>ログインした人の身分証。「誰か、いつまで有効か」が書かれ、Keycloak の署名つき。BFF はこれを見て人を判断する</span></li>
   <li><b>BFF</b><span>Backend for Frontend。画面のための API。JWT を検証し（門 2）、認可 API に聞き（門 3）、業務 API を呼ぶ</span></li>
 </ul>
 

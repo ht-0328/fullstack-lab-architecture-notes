@@ -22,6 +22,7 @@ ul.pages small { display: block; color: var(--muted); }
 <p class="lead">仕組みを理解するための図解と解説。題材は <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a>。</p>
 <p class="muted">どのページも「全体像 → 流れ → 設定と根拠」の 3 層で、最初の 1〜2 節だけで全体像がつかめます。</p>
 <ul class="pages">
+  <li><a href="basics/login-basics.html">ログインの仕組みの基礎</a><small>最初に読むページ。札（Cookie）、受付（Nginx）、確認係（oauth2-proxy）、窓口（Keycloak）、身分証（JWT）を、ビルに入るときの例えで。一般的な仕組みの説明で、設定が変わっても変わらない</small></li>
   <li><a href="auth/authentication-authorization.html">認証・認可の図解</a><small>リクエストが通る 3 つの門。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更（2026-10-30 時点）</small></li>
   <li><a href="aws/aws-architecture.html">AWS 構成の図解（予定）</a><small>AWS 公式のアーキテクチャアイコンで描いた全体の構成、ALB のリスナールール、CI/CD の流れ、未決の点、ローカルとの対応（docs/architecture.md と docs/aws-roadmap.md の 2026-10-31 時点）</small></li>
 </ul>

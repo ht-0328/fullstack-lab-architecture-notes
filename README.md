@@ -8,6 +8,7 @@ fullstack-lab の中に置かないのは、あちらの `docs/` が AI コー�
 
 | ページ | 内容 | 読み取った時点 |
 |---|---|---|
+| [basics/login-basics.html](basics/login-basics.html) | 最初に読むページ。ログインの仕組みの基礎。札（Cookie）、受付（Nginx）、確認係（oauth2-proxy）、窓口（Keycloak）、身分証（JWT）を、ビルに入るときの例えで | 一般的な仕組みの説明（設定に依存しない）。例の値は認証・認可のページと合わせる |
 | [auth/authentication-authorization.html](auth/authentication-authorization.html) | 認証・認可の仕組み。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更 | 2026-10-30（fullstack-lab の設計書 0005 の実装後） |
 | [aws/aws-architecture.html](aws/aws-architecture.html) | AWS 構成（予定）。ALB の認証（ホストごとのリスナールール）、ECS on Fargate、RDS、IdP（Keycloak / Okta）、CI/CD（IAM ロール、ECR、CodeBuild、CodeArtifact）、ローカルとの対応、未決の点 | 2026-10-31（fullstack-lab の docs/architecture.md と docs/aws-roadmap.md から） |
 
@@ -80,7 +81,7 @@ GitHub Pages で公開しています: https://ht-0328.github.io/fullstack-lab-a
 
 ## 更新のきまり
 
-- 各ページは、その時点の fullstack-lab の設定（Nginx、compose、Keycloak の realm、BFF、認可 API、認証 API）から読み取ったものです。設定を変えたら、該当するページも直します。
+- 各ページは、その時点の fullstack-lab の設定（Nginx、compose、Keycloak の realm、BFF、認可 API、認証 API）から読み取ったものです。設定を変えたら、該当するページも直します。`basics/` の基礎ページだけは一般的な仕組みの説明で、設定が変わっても中身は変わりません（例として挙げる名前と値だけ合わせます）。
 - 正は fullstack-lab 側の設計書（`docs/design/`）と設定ファイルです。食い違ったときはそちらに合わせます。
 - 図は外部のライブラリに頼らず、HTML の中に SVG で書いています。直すときはその SVG を直接編集します。見た目は `assets/notes.css` に集めてあります（「ページの書き方」）。
 - AWS のサービスとグループ枠のアイコンは [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)（2026-07-31 版のパッケージ、2026-10-31 に取得）から、使うものだけを `assets/aws-icons/` に改変せず置き、SVG の `<image href>` で参照しています。利用条件は配布ページの記載に従います。AWS のページでは、Keycloak、Okta、GitHub など AWS 以外のものは枠だけで描きます。
