@@ -35,16 +35,16 @@
 <p class="lead">ローカルの Docker Compose で動いている構成を AWS に載せるとどうなるかを、fullstack-lab の <code>docs/architecture.md</code>「AWS 環境の構成図（予定）」と <code>docs/aws-roadmap.md</code> から読み取り、AWS 公式のアーキテクチャアイコンで描いたものです。<strong>まだ作っていません</strong>（フェーズ 3 以降は未着手）。未決の点は図でも破線と「未決」で示します。</p>
 
 <div class="howto" aria-label="この資料の読み方">
-  <div class="lv l1"><b>層 1 ・ ぱっと見</b><span>5 分。01 だけ。「入口が ALB に、IdP が Okta に、コンテナが ECS に変わるだけ」が分かれば十分</span></div>
-  <div class="lv l2"><b>層 2 ・ 流れを追う</b><span>15 分。02〜04。ALB がどう認証するか、CI/CD で成果物がどう流れるか、まだ決めていないこと</span></div>
+  <div class="lv l1"><b>層 1 ・ 全体像</b><span>5 分。01 だけ。「入口が ALB に、IdP が Okta に、コンテナが ECS に変わるだけ」が分かれば十分</span></div>
+  <div class="lv l2"><b>層 2 ・ 流れ</b><span>15 分。02〜04。ALB がどう認証するか、CI/CD で成果物がどう流れるか、まだ決めていないこと</span></div>
   <div class="lv l3"><b>層 3 ・ 設定と根拠</b><span>構築に着手する人向け。05〜06。ローカルとの対応表と、元になった文書。折りたたんであるので開いて読む</span></div>
 </div>
 
 <nav class="toc" aria-label="目次">
-  <div class="group"><span class="lt l1">層 1 ・ ぱっと見</span><ol>
+  <div class="group"><span class="lt l1">層 1 ・ 全体像</span><ol>
     <li><span class="no">01</span><a href="#overview">全体の構成</a></li>
   </ol></div>
-  <div class="group"><span class="lt l2">層 2 ・ 流れを追う</span><ol>
+  <div class="group"><span class="lt l2">層 2 ・ 流れ</span><ol>
     <li><span class="no">02</span><a href="#alb">ALB の認証: ホストごとのリスナールール</a></li>
     <li><span class="no">03</span><a href="#cicd">CI/CD と成果物の流れ</a></li>
     <li><span class="no">04</span><a href="#open">未決の点</a></li>
@@ -55,7 +55,7 @@
   </ol></div>
 </nav>
 
-<div class="layer-head l1"><span class="tag">層 1</span><span class="name">ぱっと見</span><small>全体の形。ここだけで AWS に載せたときの違いが分かる</small></div>
+<div class="layer-head l1"><span class="tag">層 1</span><span class="name">全体像</span><small>全体の形。ここだけで AWS に載せたときの違いが分かる</small></div>
 
 <!-- ======================================================================= -->
 <h2 id="overview"><span class="no">01</span>全体の構成</h2>
@@ -70,7 +70,7 @@
 
 <div class="callout"><p><strong>ローカルと変わらないもの。</strong>門 2（BFF での JWT 検証）と門 3（認可 API の判定）はコードも設定も同じです。ALB が付けるヘッダー名 <code>x-amzn-oidc-accesstoken</code> はローカルの Nginx がすでに同じ名前で付けているので、BFF は違いを知りません。認証・認可の中身は <a href="../auth/authentication-authorization.html">認証・認可の図解</a> にあります。</p></div>
 
-<div class="layer-head l2"><span class="tag">層 2</span><span class="name">流れを追う</span><small>ALB の認証、CI/CD、まだ決めていないこと</small></div>
+<div class="layer-head l2"><span class="tag">層 2</span><span class="name">流れ</span><small>ALB の認証、CI/CD、まだ決めていないこと</small></div>
 
 <!-- ======================================================================= -->
 <h2 id="alb"><span class="no">02</span>ALB の認証: ホストごとのリスナールール</h2>

@@ -14,7 +14,7 @@
   --au: #5b6b1f;                                        /* 認証 API（ユーザーの作成・変更） */
   --ok: #1e8a4c; --ok-soft: rgba(30, 138, 76, 0.12);    /* 許可 */
   --ng: #bf3b3b; --ng-soft: rgba(191, 59, 59, 0.12);    /* 拒否 */
-  --l1: #1e8a4c; --l2: #1f5fa8; --l3: #5d6679;          /* 層 1（ぱっと見）/ 層 2（流れ）/ 層 3（設定） */
+  --l1: #1e8a4c; --l2: #1f5fa8; --l3: #5d6679;          /* 層 1（全体像）/ 層 2（流れ）/ 層 3（設定） */
   --g-cloud: #232f3e; --g-region: #00a4a6; --g-vpc: #8c4fff; --g-subnet: #7aa116; --g-ecs: #ed7100; /* AWS のグループ枠（公式の色） */
   --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
   --font-display: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;

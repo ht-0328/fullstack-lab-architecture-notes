@@ -62,17 +62,17 @@
 <p class="lead">ログインしてから画面が出るまでに、誰が「本人か」を確かめ、誰が「してよいか」を決めているかを、このリポジトリの実際の設定で追います。登場するのは、ログイン画面と身分証（JWT）を出す Keycloak、入口で見張る Nginx と oauth2-proxy、身分証を検める BFF、やってよいかを判定する認可 API です。最初の 2 節だけで全体像がつかめ、先に進むほど設定の中身に入ります。</p>
 
 <div class="howto" aria-label="この資料の読み方">
-  <div class="lv l1"><b>層 1 ・ ぱっと見</b><span>5 分。01 と 02。「3 つの門」と登場人物、8 つの言葉だけ覚えれば会話についていける</span></div>
-  <div class="lv l2"><b>層 2 ・ 流れを追う</b><span>20 分。03〜07。ログイン、署名、認可、会員登録が「どの順で誰を通るか」。各節の先頭にコマ割りの要約がある</span></div>
+  <div class="lv l1"><b>層 1 ・ 全体像</b><span>5 分。01 と 02。「3 つの門」と登場人物、8 つの言葉だけ覚えれば会話についていける</span></div>
+  <div class="lv l2"><b>層 2 ・ 流れ</b><span>20 分。03〜07。ログイン、署名、認可、会員登録が「どの順で誰を通るか」。各節の先頭にコマ割りの要約がある</span></div>
   <div class="lv l3"><b>層 3 ・ 設定と根拠</b><span>設定を触る人向け。08〜12。JWT の中身、Keycloak の用語、ホストと realm の対応、確かめ方。折りたたんであるので開いて読む</span></div>
 </div>
 
 <nav class="toc" aria-label="目次">
-  <div class="group"><span class="lt l1">層 1 ・ ぱっと見</span><ol>
+  <div class="group"><span class="lt l1">層 1 ・ 全体像</span><ol>
     <li><span class="no">01</span><a href="#gates">結論: 3 つの門</a></li>
     <li><span class="no">02</span><a href="#cast">登場人物と、まず覚える言葉</a></li>
   </ol></div>
-  <div class="group"><span class="lt l2">層 2 ・ 流れを追う</span><ol>
+  <div class="group"><span class="lt l2">層 2 ・ 流れ</span><ol>
     <li><span class="no">03</span><a href="#overview">つながりの全体図</a></li>
     <li><span class="no">04</span><a href="#login">ログインの流れ</a></li>
     <li><span class="no">05</span><a href="#signature">署名と検証: 偽物を見抜く仕組み</a></li>
@@ -88,7 +88,7 @@
   </ol></div>
 </nav>
 
-<div class="layer-head l1"><span class="tag">層 1</span><span class="name">ぱっと見</span><small>5 分。ここだけで「誰が確かめて、誰が決めるか」が分かる</small></div>
+<div class="layer-head l1"><span class="tag">層 1</span><span class="name">全体像</span><small>5 分。ここだけで「誰が確かめて、誰が決めるか」が分かる</small></div>
 
 <!-- ======================================================================= -->
 <h2 id="gates"><span class="no">01</span>結論: リクエストは 3 つの門を通る</h2>
@@ -201,7 +201,7 @@
   <li><b>BFF</b><span>Backend for Frontend。画面のための API。JWT を検証し（門 2）、認可 API に聞き（門 3）、業務 API を呼ぶ</span></li>
 </ul>
 
-<div class="layer-head l2"><span class="tag">層 2</span><span class="name">流れを追う</span><small>ログイン、署名、認可、会員登録が、どの順で誰を通るか。各節の先頭に要約</small></div>
+<div class="layer-head l2"><span class="tag">層 2</span><span class="name">流れ</span><small>ログイン、署名、認可、会員登録が、どの順で誰を通るか。各節の先頭に要約</small></div>
 
 <!-- ======================================================================= -->
 <h2 id="overview"><span class="no">03</span>つながりの全体図</h2>
