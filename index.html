@@ -2,30 +2,29 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>fullstack-lab architecture notes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/notes.css">
 <style>
-:root { --bg: #f4f5f8; --fg: #1c2232; --muted: #5d6679; --line: #d5d9e3; --accent: #2d49cf; }
-@media (prefers-color-scheme: dark) { :root { --bg: #12161f; --fg: #e5e8ef; --muted: #9aa3b6; --line: #2e3647; --accent: #8ea0ff; color-scheme: dark; } }
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif; line-height: 1.8; }
-main { max-width: 720px; margin: 0 auto; padding: 48px 16px 64px; }
-h1 { font-size: 26px; margin: 0 0 8px; }
-p { margin: 0 0 24px; color: var(--muted); }
-ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-li { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-a { color: var(--accent); font-weight: 700; text-decoration: none; }
-a:hover { text-decoration: underline; }
-small { display: block; color: var(--muted); }
+/* 一覧ページだけの装飾。共通の見た目は assets/notes.css */
+main { max-width: 760px; margin: 0 auto; padding: 48px 0 64px; }
+ul.pages { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+ul.pages li { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: var(--surface); }
+ul.pages a { font-weight: 700; text-decoration: none; }
+ul.pages a:hover { text-decoration: underline; }
+ul.pages small { display: block; color: var(--muted); }
 </style>
 </head>
 <body>
-<main>
+<div class="wrap"><main>
 <h1>fullstack-lab architecture notes</h1>
-<p>仕組みを理解するための図解と解説。題材は <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a>。</p>
-<ul>
-  <li><a href="auth/authentication-authorization.html">認証・認可の図解</a><small>Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更（2026-10-30 時点）</small></li>
-  <li><a href="aws/aws-architecture.html">AWS 構成の図解（予定）</a><small>AWS 公式のアーキテクチャアイコンで描いた全体の構成、ALB のリスナールール、ローカルとの対応、CI/CD の流れ、未決の点（docs/architecture.md と docs/aws-roadmap.md の 2026-10-31 時点）</small></li>
+<p class="lead">仕組みを理解するための図解と解説。題材は <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a>。</p>
+<p class="muted">どのページも「ぱっと見 → 流れを追う → 設定と根拠」の 3 層で、最初の 1〜2 節だけで全体像がつかめます。</p>
+<ul class="pages">
+  <li><a href="auth/authentication-authorization.html">認証・認可の図解</a><small>リクエストが通る 3 つの門。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更（2026-10-30 時点）</small></li>
+  <li><a href="aws/aws-architecture.html">AWS 構成の図解（予定）</a><small>AWS 公式のアーキテクチャアイコンで描いた全体の構成、ALB のリスナールール、CI/CD の流れ、未決の点、ローカルとの対応（docs/architecture.md と docs/aws-roadmap.md の 2026-10-31 時点）</small></li>
 </ul>
-</main>
+</main></div>
 </body>
 </html>
