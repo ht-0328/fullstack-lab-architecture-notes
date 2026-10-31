@@ -1,0 +1,241 @@
+/* fullstack-lab-architecture-notes の共通 CSS。
+   読者は「新しくチームに入った人」と「まだスキルの無い人」。ページの決まりは README の「ページの書き方」にある。
+   各ページは <link rel="stylesheet" href="../assets/notes.css"> で読み込み、そのページだけの装飾を <style> に数行残す。
+   ここを変えると全ページに効くので、変えたら全ページを描画して確かめる。 */
+
+/* ===== 1. 色とフォント。「色 = 意味」を全ページで揃える ===== */
+:root {
+  --bg: #f4f5f8; --surface: #ffffff; --surface-2: #eceef4; --fg: #1c2232; --muted: #5d6679; --line: #d5d9e3; --accent: #2d49cf;
+  --c: #0f8777;  --c-soft: rgba(15, 135, 119, 0.12);   /* 一般利用者の経路 */
+  --s: #7446d4;  --s-soft: rgba(116, 70, 212, 0.12);   /* 社員の経路 */
+  --jwt: #a8650a; --jwt-soft: rgba(168, 101, 10, 0.14); /* トークン（JWT）が運ばれる線 */
+  --k: #b4471d;  --k-soft: rgba(180, 71, 29, 0.10);    /* IdP（Keycloak / Okta）とのやり取り */
+  --z: #1f5fa8;                                         /* 認可 API（判定） */
+  --au: #5b6b1f;                                        /* 認証 API（ユーザーの作成・変更） */
+  --ok: #1e8a4c; --ok-soft: rgba(30, 138, 76, 0.12);    /* 許可 */
+  --ng: #bf3b3b; --ng-soft: rgba(191, 59, 59, 0.12);    /* 拒否 */
+  --l1: #1e8a4c; --l2: #1f5fa8; --l3: #5d6679;          /* 層 1（全体像）/ 層 2（流れ）/ 層 3（設定） */
+  --g-cloud: #232f3e; --g-region: #00a4a6; --g-vpc: #8c4fff; --g-subnet: #7aa116; --g-ecs: #ed7100; /* AWS のグループ枠（公式の色） */
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-display: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161f; --surface: #1a1f2b; --surface-2: #222838; --fg: #e5e8ef; --muted: #9aa3b6; --line: #2e3647; --accent: #8ea0ff;
+    --c: #3cc2ad; --c-soft: rgba(60, 194, 173, 0.16); --s: #b393ff; --s-soft: rgba(179, 147, 255, 0.16);
+    --jwt: #e3a942; --jwt-soft: rgba(227, 169, 66, 0.16); --k: #ee8a5a; --k-soft: rgba(238, 138, 90, 0.14);
+    --z: #6ea6ea; --au: #a9bd55; --ok: #4fc47c; --ok-soft: rgba(79, 196, 124, 0.16); --ng: #f27b7b; --ng-soft: rgba(242, 123, 123, 0.16);
+    --l1: #4fc47c; --l2: #6ea6ea; --l3: #9aa3b6;
+    --g-cloud: #c9d1e3; --g-region: #2fc4c6; --g-vpc: #b08cff; --g-subnet: #9bc43a; --g-ecs: #ff9a3d;
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) .ic-l { display: none; }
+  :root:not([data-theme="light"]) .ic-d { display: inline; }
+}
+:root[data-theme="dark"] {
+  --bg: #12161f; --surface: #1a1f2b; --surface-2: #222838; --fg: #e5e8ef; --muted: #9aa3b6; --line: #2e3647; --accent: #8ea0ff;
+  --c: #3cc2ad; --c-soft: rgba(60, 194, 173, 0.16); --s: #b393ff; --s-soft: rgba(179, 147, 255, 0.16);
+  --jwt: #e3a942; --jwt-soft: rgba(227, 169, 66, 0.16); --k: #ee8a5a; --k-soft: rgba(238, 138, 90, 0.14);
+  --z: #6ea6ea; --au: #a9bd55; --ok: #4fc47c; --ok-soft: rgba(79, 196, 124, 0.16); --ng: #f27b7b; --ng-soft: rgba(242, 123, 123, 0.16);
+  --l1: #4fc47c; --l2: #6ea6ea; --l3: #9aa3b6;
+  --g-cloud: #c9d1e3; --g-region: #2fc4c6; --g-vpc: #b08cff; --g-subnet: #9bc43a; --g-ecs: #ff9a3d;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .ic-l { display: none; }
+:root[data-theme="dark"] .ic-d { display: inline; }
+.ic-d { display: none; }   /* AWS 公式アイコンの Light / Dark 版の切り替え */
+
+/* ===== 2. 土台。1 カラム、図は枠いっぱい、本文は 1 行 40 文字前後 ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+img, svg { max-width: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.85; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 0 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--surface-2); padding: 0.08em 0.38em; border-radius: 4px; word-break: break-all; }
+pre { background: var(--surface-2); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; margin: 0; }
+pre code { background: none; padding: 0; font-size: inherit; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4.6vw, 40px); margin: 28px 0 10px; letter-spacing: 0.01em; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(21px, 3vw, 27px); margin: 0 0 14px; padding-top: 56px; }
+h2 .no { font-family: var(--font-mono); font-size: 0.6em; color: var(--muted); margin-right: 12px; vertical-align: 0.15em; letter-spacing: 0.04em; }
+h3 { font-size: 17px; font-weight: 700; margin: 30px 0 8px; }
+p { margin: 0 0 14px; max-width: 42em; }
+.lead { font-size: 17px; max-width: 42em; }
+ul.plain, ol.plain { padding-left: 1.3em; max-width: 44em; }
+ul.plain li, ol.plain li { margin-bottom: 6px; }
+strong { font-weight: 700; }
+.muted { color: var(--muted); }
+.files { font-size: 14px; }
+.files li { margin-bottom: 4px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.two > div { min-width: 0; }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+/* ===== 3. 上部の固定バー: 誰として見るか（alice / dave）。図と表の値が切り替わる ===== */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))) 0 calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-block: 10px; }
+.bar .label { font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em; }
+.persona { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); gap: 3px; }
+.persona button { font: inherit; font-size: 13.5px; font-weight: 500; padding: 5px 14px; border-radius: 999px; border: 0; background: transparent; color: var(--fg); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.persona button .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.persona button[data-persona="c"] .dot { background: var(--c); }
+.persona button[data-persona="s"] .dot { background: var(--s); }
+.persona button svg.ic { width: 14px; height: 14px; margin-right: 0; vertical-align: -2px; }
+.persona button[aria-pressed="true"] { background: var(--surface-2); font-weight: 700; }
+.persona button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.v { font-weight: 700; }                      /* 視点で値が入れ替わる語（data-c / data-s） */
+.v.mono { font-family: var(--font-mono); font-size: 0.9em; font-weight: 500; }
+:root:not([data-persona]) .only-s, :root[data-persona="c"] .only-s { display: none; }
+:root[data-persona="s"] .only-c { display: none; }
+:root[data-persona="s"] .v { color: var(--s); }
+:root:not([data-persona]) .v, :root[data-persona="c"] .v { color: var(--c); }
+.r-c, .r-s { transition: opacity 0.2s; }       /* 選んだ利用者の経路だけ濃く出す（図の <g>） */
+:root:not([data-persona]) .r-s, :root[data-persona="c"] .r-s { opacity: 0.32; }
+:root[data-persona="s"] .r-c { opacity: 0.32; }
+tr.row-c, tr.row-s { transition: background 0.2s; }
+:root:not([data-persona]) tr.row-c, :root[data-persona="c"] tr.row-c { background: var(--c-soft); }
+:root[data-persona="s"] tr.row-s { background: var(--s-soft); }
+
+/* ===== 4. 読み方・層・目次・折りたたみ。「どこまで読めばよいか」を最初に示す ===== */
+.howto { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 18px 0 8px; }
+@media (max-width: 720px) { .howto { grid-template-columns: 1fr; } }
+.howto .lv { border: 1px solid var(--line); border-top: 3px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 14px 12px; font-size: 13.5px; line-height: 1.7; }
+.howto .lv b { display: block; font-size: 14px; margin-bottom: 2px; }
+.howto .lv.l1 { border-top-color: var(--l1); } .howto .lv.l1 b { color: var(--l1); }
+.howto .lv.l2 { border-top-color: var(--l2); } .howto .lv.l2 b { color: var(--l2); }
+.howto .lv.l3 { border-top-color: var(--l3); } .howto .lv.l3 b { color: var(--l3); }
+.layer-head { margin: 64px 0 -40px; padding-bottom: 8px; border-bottom: 2px solid var(--line); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.layer-head .tag { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 10px; border-radius: 999px; color: #fff; }
+.layer-head .name { font-weight: 700; font-size: 15px; }
+.layer-head small { color: var(--muted); font-size: 13px; }
+.layer-head.l1 { border-color: var(--l1); } .layer-head.l1 .tag { background: var(--l1); }
+.layer-head.l2 { border-color: var(--l2); } .layer-head.l2 .tag { background: var(--l2); }
+.layer-head.l3 { border-color: var(--l3); } .layer-head.l3 .tag { background: var(--l3); }
+nav.toc { margin: 22px 0 8px; display: grid; gap: 10px; }
+nav.toc .group { display: grid; grid-template-columns: 150px 1fr; gap: 4px 16px; align-items: start; }
+@media (max-width: 600px) { nav.toc .group { grid-template-columns: 1fr; } }
+nav.toc .lt { font-size: 12.5px; font-weight: 700; padding-top: 2px; }
+nav.toc .lt.l1 { color: var(--l1); } nav.toc .lt.l2 { color: var(--l2); } nav.toc .lt.l3 { color: var(--l3); }
+nav.toc ol { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2px 20px; padding: 0; margin: 0; list-style: none; }
+nav.toc li { font-size: 14px; }
+nav.toc li .no { font-family: var(--font-mono); color: var(--muted); font-size: 12px; margin-right: 10px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+details.deep { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 0 16px; margin: 12px 0 16px; }
+details.deep > summary { cursor: pointer; padding: 10px 0; font-weight: 700; font-size: 14px; list-style: none; display: flex; align-items: center; gap: 8px; }
+details.deep > summary::-webkit-details-marker { display: none; }
+details.deep > summary::before { content: "▸"; color: var(--muted); font-size: 12px; transition: transform 0.15s; }
+details.deep[open] > summary::before { transform: rotate(90deg); }
+details.deep > summary small { font-weight: 400; color: var(--muted); }
+details.deep[open] { padding-bottom: 12px; }
+details.deep[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 14px; margin: 10px 0 6px; padding: 0; list-style: none; }
+.glossary li { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13.5px; line-height: 1.6; }
+.glossary li b { font-size: 13.5px; }
+.strip { list-style: none; padding: 0; margin: 12px 0 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; counter-reset: strip; }
+.strip li { position: relative; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px 10px 40px; font-size: 13.5px; line-height: 1.6; }
+.strip li b { display: block; font-size: 14px; }
+.strip li::before { counter-increment: strip; content: counter(strip); position: absolute; left: 12px; top: 10px; width: 20px; height: 20px; border-radius: 50%; background: var(--surface-2); color: var(--muted); font-family: var(--font-mono); font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+.strip li[data-no]::before { content: attr(data-no); }
+
+/* ===== 5. 図。SVG を viewBox で描き、枠の中で横スクロール ===== */
+figure { margin: 18px 0 8px; }
+.fig-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px; }
+.fig-scroll svg { display: block; max-width: 100%; height: auto; min-width: 720px; }
+.fig-scroll svg.seq { min-width: 760px; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 10px; max-width: 60em; }
+figcaption b { color: var(--fg); }
+.legend { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 18px; margin: 14px 0 4px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 13.5px; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend li svg.ic { margin-right: 0; }
+.legend .w { color: var(--muted); margin: 0 2px; }
+
+/* ===== 6. SVG の部品。色やサイズは SVG に直書きせず、ここのクラスを使う ===== */
+svg text { fill: currentColor; font-family: var(--font-body); }
+svg .mono { font-family: var(--font-mono); }
+svg .t10 { font-size: 10px; } svg .t105 { font-size: 10.5px; } svg .t11 { font-size: 11px; } svg .t12 { font-size: 12px; }
+svg .t13 { font-size: 13px; font-weight: 700; }
+svg .t105b { font-size: 10.5px; font-weight: 700; } svg .t115b { font-size: 11.5px; font-weight: 700; }
+svg .t12b { font-size: 12px; font-weight: 700; } svg .t125b { font-size: 12.5px; font-weight: 700; } svg .t13b { font-size: 13px; font-weight: 700; }
+svg .tsm { font-size: 10px; fill: var(--muted); }       /* 小さい補足 */
+svg .tm { fill: var(--muted); } svg .tc { fill: var(--c); } svg .ts { fill: var(--s); } svg .tk { fill: var(--k); } svg .tj { fill: var(--jwt); }
+svg .tz { fill: var(--z); } svg .tau { fill: var(--au); } svg .tok { fill: var(--ok); } svg .tng { fill: var(--ng); }
+svg .mk { fill: currentColor; } svg .mk-c { fill: var(--c); } svg .mk-s { fill: var(--s); } svg .mk-jwt { fill: var(--jwt); }
+svg .mk-k { fill: var(--k); } svg .mk-mu { fill: var(--muted); } svg .mk-z { fill: var(--z); } svg .mk-au { fill: var(--au); }
+svg .mk-ok { fill: var(--ok); } svg .mk-ng { fill: var(--ng); }
+svg .ln { stroke: currentColor; stroke-width: 1.5; fill: none; }
+svg .ln.c { stroke: var(--c); } svg .ln.s { stroke: var(--s); } svg .ln.k { stroke: var(--k); } svg .ln.z { stroke: var(--z); } svg .ln.au { stroke: var(--au); }
+svg .ln.jwt { stroke: var(--jwt); stroke-width: 2; }
+svg .ln.thin { stroke-opacity: 0.6; }
+svg .ln.dash { stroke-dasharray: 5 4; }
+svg .ln.thin.dash { stroke: var(--muted); }
+svg .box { fill: var(--surface); stroke: currentColor; stroke-width: 1.3; }
+svg .box.c { stroke: var(--c); fill: var(--c-soft); } svg .box.s { stroke: var(--s); fill: var(--s-soft); }
+svg .box.k { stroke: var(--k); fill: var(--k-soft); } svg .box.z { stroke: var(--z); } svg .box.au { stroke: var(--au); }
+svg .box.ghost { fill: none; stroke-dasharray: 4 4; stroke-opacity: 0.7; }
+svg .note { fill: var(--surface); stroke: var(--jwt); stroke-width: 1.2; }
+svg .notetext { font-size: 11px; font-weight: 700; }
+svg .gate { fill: var(--surface); stroke: currentColor; stroke-width: 1.5; }
+svg .gate-shadow { fill: currentColor; fill-opacity: 0.06; }
+/* シーケンス図 */
+svg .life { stroke: currentColor; stroke-opacity: 0.22; stroke-width: 1; stroke-dasharray: 2 4; }
+svg .pbox { fill: var(--surface); stroke: currentColor; stroke-width: 1.3; }
+svg .pbox.lane-p { stroke: var(--c); } svg .pbox.lane-k { stroke: var(--k); fill: var(--k-soft); } svg .pbox.lane-z { stroke: var(--z); } svg .pbox.lane-au { stroke: var(--au); }
+svg .msg { stroke: currentColor; stroke-width: 1.5; }
+svg .msg.ret { stroke-dasharray: 5 4; }
+svg .msg.ln-jwt { stroke: var(--jwt); } svg .msg.ln-k { stroke: var(--k); } svg .msg.ln-z { stroke: var(--z); } svg .msg.ln-au { stroke: var(--au); }
+svg .msg.ln-ok { stroke: var(--ok); } svg .msg.ln-ng { stroke: var(--ng); }
+svg .msglabel { font-size: 12px; }
+svg .band { fill: currentColor; fill-opacity: 0.045; }
+svg .band.band-ok { fill: var(--ok); fill-opacity: 0.09; } svg .band.band-ng { fill: var(--ng); fill-opacity: 0.09; }
+svg .phase { fill: var(--muted); }
+/* AWS の構成図。グループ枠は公式の作法どおり線で、リージョンは破線 */
+svg .frame { fill: none; stroke-width: 1.4; }
+svg .frame.f-cloud { stroke: var(--g-cloud); } svg .frame.f-region { stroke: var(--g-region); stroke-dasharray: 6 4; }
+svg .frame.f-vpc { stroke: var(--g-vpc); } svg .frame.f-subnet { stroke: var(--g-subnet); } svg .frame.f-ecs { stroke: var(--g-ecs); stroke-dasharray: 4 3; }
+svg .ftitle { font-size: 12.5px; font-weight: 700; }
+svg .ftitle.f-cloud { fill: var(--g-cloud); } svg .ftitle.f-region { fill: var(--g-region); } svg .ftitle.f-vpc { fill: var(--g-vpc); }
+svg .ftitle.f-subnet { fill: var(--g-subnet); } svg .ftitle.f-ecs { fill: var(--g-ecs); }
+svg .tbox { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+svg .tbox.ghost { stroke: var(--k); stroke-dasharray: 4 3; fill: var(--k-soft); }
+svg .tt { font-size: 12px; font-weight: 700; }
+svg .idp { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 3 3; }
+svg .panel { fill: var(--surface-2); stroke: var(--line); stroke-width: 1; }
+svg .row { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+svg .row.row-c { stroke: var(--c); } svg .row.row-s { stroke: var(--s); }
+.tic { width: 22px; height: 22px; vertical-align: -5px; margin-right: 6px; border-radius: 4px; }  /* 表の中の AWS アイコン */
+
+/* ===== 7. アイコン。<body> 先頭の <symbol> を <use> で参照する。同じ意味には同じアイコン ===== */
+.ic { fill: currentColor; }
+.ic.c { fill: var(--c); } .ic.s { fill: var(--s); } .ic.k { fill: var(--k); } .ic.z { fill: var(--z); } .ic.au { fill: var(--au); }
+.ic.jwt { fill: var(--jwt); } .ic.m { fill: var(--muted); } .ic.ng { fill: var(--ng); }
+svg.ic { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; flex: none; }
+
+/* ===== 8. 表、手順、カード、囲み ===== */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+th { font-weight: 700; background: var(--surface-2); white-space: nowrap; font-size: 13px; letter-spacing: 0.02em; }
+tbody tr:last-child td { border-bottom: 0; }
+td.k { font-weight: 700; white-space: nowrap; }
+.ok { color: var(--ok); font-weight: 700; }
+.ng { color: var(--ng); font-weight: 700; }
+.chip { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; margin-right: 4px; }
+.chip.bff { border-color: var(--jwt); color: var(--jwt); } .chip.z { border-color: var(--z); color: var(--z); } .chip.n { border-color: currentColor; }
+.chip.k { border-color: var(--k); color: var(--k); } .chip.au { border-color: var(--au); color: var(--au); } .chip.c { border-color: var(--c); color: var(--c); } .chip.s { border-color: var(--s); color: var(--s); }
+ol.steps { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; max-width: 62em; }
+ol.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; font-size: 14.5px; line-height: 1.75; }
+ol.steps .num { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+@media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+.card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; font-size: 14px; line-height: 1.7; }
+.card h3 { margin: 0 0 6px; font-size: 15.5px; }
+.card .q { font-weight: 700; margin-bottom: 4px; }
+.card .fail { color: var(--muted); font-size: 13px; }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; max-width: 60em; font-size: 14.5px; }
+.callout p:last-child { margin-bottom: 0; }
