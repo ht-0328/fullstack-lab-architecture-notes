@@ -8,7 +8,8 @@ fullstack-lab の中に置かないのは、あちらの `docs/` が AI コー�
 
 | ページ | 内容 | 読み取った時点 |
 |---|---|---|
-| [basics/login-basics.html](basics/login-basics.html) | 最初に読むページ。ログインの仕組みの基礎。札（Cookie）、受付（Nginx）、確認係（oauth2-proxy）、窓口（Keycloak）、身分証（JWT）を、ビルに入るときの例えで | 一般的な仕組みの説明（設定に依存しない）。例の値は認証・認可のページと合わせる |
+| [basics/login-basics.html](basics/login-basics.html) | 最初に読むページ。ログインの仕組みの基礎。Cookie、Nginx、oauth2-proxy、Keycloak、JWT の役割と、ログインの流れ。01 と 02 だけビルに入るときの例え（札、受付、確認係、窓口、身分証）を添える | 一般的な仕組みの説明（設定に依存しない）。例の値は認証・認可のページと合わせる |
+| [basics/aws-account-basics.html](basics/aws-account-basics.html) | AWS フェーズの前に読むページ。AWS アカウントの基礎。アカウント（ビル）、root ユーザー（オーナー）、IAM ユーザー（合鍵）、IAM ロール（入館証）、ポリシー（許可の紙）、会社での分け方（Organizations とアクセスポータル）、新しいサインアップ形式との違い | 一般的な仕組みの説明（設定に依存しない）。例の名前と値は 2026-11-03 時点で fullstack-lab の AWS フェーズのために作ったもの |
 | [auth/authentication-authorization.html](auth/authentication-authorization.html) | 認証・認可の仕組み。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更 | 2026-10-30（fullstack-lab の設計書 0005 の実装後） |
 | [aws/aws-architecture.html](aws/aws-architecture.html) | AWS 構成（予定）。ALB の認証（ホストごとのリスナールール）、ECS on Fargate、RDS、IdP（Keycloak / Okta）、CI/CD（IAM ロール、ECR、CodeBuild、CodeArtifact）、ローカルとの対応、未決の点 | 2026-10-31（fullstack-lab の docs/architecture.md と docs/aws-roadmap.md から） |
 
@@ -40,6 +41,8 @@ GitHub Pages で公開しています: https://ht-0328.github.io/fullstack-lab-a
 - 専門用語は初出で一言そえます。例: 「JWT（ログインした人の身分証。Keycloak が発行する）」。
 - 層 1 に「まず覚える言葉」を 8 語まで置きます（`glossary`）。
 - 比喩はページをまたいで同じにします（「門」= 守りの段、「身分証」= JWT、「入口」= Nginx や ALB）。
+- 比喩は全体像をつかむための補助です。使うのは層 1（01 の図と 02 の言葉）だけにし、そこでも「root ユーザー（オーナー）」のように実物の名前を先に書きます。比喩だけの文や見出しにしません。
+- 層 2 と層 3 の本文、見出し、要約（`strip`）、図のラベルは、実物の名前（root ユーザー、IAM ロール、STS など）で書きます。比喩に置き換えると「何を設定するのか、誰が何を呼ぶのか」が見えなくなるためです。
 - 設定値、URL、ヘッダー名、ファイル名は `code` にして「実際の値」だと分かるようにします。
 
 ### 4. 図

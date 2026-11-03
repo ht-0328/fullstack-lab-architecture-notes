@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- ログインの仕組みの基礎。Cookie（札）、Nginx（受付）、oauth2-proxy（確認係）、Keycloak（窓口）、JWT（身分証）を、ビルに入るときの例えで説明する。
+<!-- ログインの仕組みの基礎。Cookie、Nginx、oauth2-proxy、Keycloak、JWT の役割と、ログインの流れを説明する。
+     ビルに入るときの例え（札、受付、確認係、窓口、身分証）は層 1 の 01 と 02 だけで添え、03 からは実物の名前で書く（README の「3. 言葉」）。
      一般的な仕組みの説明なので fullstack-lab の設定が変わっても中身は変わらない。例として出す名前と値だけ、認証・認可のページと合わせる。
      見た目は ../assets/notes.css（共通）。外部に依存するのは Google Fonts だけで、読めなくても代替フォントで表示できる。 -->
 <title>fullstack-lab ログインの仕組みの基礎</title>
@@ -37,11 +38,11 @@
 <div class="wrap">
 
 <h1>fullstack-lab ログインの仕組みの基礎</h1>
-<p class="lead">認証・認可のページを読む前に知っておく 5 つのもの、札（Cookie）、受付（Nginx）、確認係（oauth2-proxy）、窓口（Keycloak）、身分証（JWT）を、ビルに入るときの例えで説明します。ここに書いてあるのは一般的な仕組みで、fullstack-lab の設定が変わっても変わりません。例として出す名前と値はこのリポジトリのものです。</p>
+<p class="lead">認証・認可のページを読む前に知っておく 5 つのもの、Cookie、Nginx、oauth2-proxy、Keycloak、JWT の役割と、ログインの流れを説明します。01 と 02 ではビルに入るときの例え（札、受付、確認係、窓口、身分証）を添え、03 からは実物の名前で書きます。ここに書いてあるのは一般的な仕組みで、fullstack-lab の設定が変わっても変わりません。</p>
 
 <div class="howto" aria-label="この資料の読み方">
   <div class="lv l1"><b>層 1 ・ 全体像</b><span>5 分。01 と 02。5 つの役と 8 つの言葉。これだけで認証・認可のページが読める</span></div>
-  <div class="lv l2"><b>層 2 ・ 流れ</b><span>10 分。03 と 04。初めて来たときに札をもらうまでと、2 回目から札で通る流れ</span></div>
+  <div class="lv l2"><b>層 2 ・ 流れ</b><span>10 分。03 と 04。初めて開いたときに Cookie をもらうまでと、2 回目から Cookie で通る流れ</span></div>
   <div class="lv l3"><b>層 3 ・ 設定と根拠</b><span>例えと実物の対応表、よくある誤解。折りたたんであるので開いて読む</span></div>
 </div>
 
@@ -51,8 +52,8 @@
     <li><span class="no">02</span><a href="#cast">登場人物と、まず覚える言葉</a></li>
   </ol></div>
   <div class="group"><span class="lt l2">層 2 ・ 流れ</span><ol>
-    <li><span class="no">03</span><a href="#first">初めて来たとき: 札をもらうまで</a></li>
-    <li><span class="no">04</span><a href="#next">2 回目から: 札で通る</a></li>
+    <li><span class="no">03</span><a href="#first">初めて開いたとき: Cookie をもらうまで</a></li>
+    <li><span class="no">04</span><a href="#next">2 回目から: Cookie で通る</a></li>
   </ol></div>
   <div class="group"><span class="lt l3">層 3 ・ 設定と根拠</span><ol>
     <li><span class="no">05</span><a href="#mapping">例えと実物の対応</a></li>
@@ -64,11 +65,11 @@
 
 <!-- ======================================================================= -->
 <h2 id="conclusion"><span class="no">01</span>結論: ログインは 5 つの役で回る</h2>
-<p>ログインの正体は「窓口で身分証をもらい、確認係がそれを札に包んでブラウザに持たせる」ことです。2 回目からは札を見せるだけで通れます。受付はそのたびに確認係へ「この札は有効？」と聞いてから、奥の部屋へ案内します。</p>
+<p>ログインの正体は、Keycloak（窓口）で本人確認をして JWT（身分証）をもらい、oauth2-proxy（確認係）がそれを Cookie（札）に包んでブラウザに持たせることです。2 回目からは Cookie を見せるだけで通れます。Nginx（受付）はそのたびに oauth2-proxy へ「この Cookie は有効？」と聞いてから、奥のアプリへ渡します。</p>
 
 <figure>
 <div class="fig-scroll">
-<svg viewBox="0 0 760 360" role="img" aria-label="あなた（ブラウザ）が札（Cookie）を添えて受付（Nginx）へ行き、受付は確認係（oauth2-proxy）に札が有効か聞く。初回は確認係が窓口（Keycloak）へ案内し、身分証（JWT）をもらう。受付は身分証を付けて奥の部屋（Nuxt、BFF、API）へ渡す" class="arch" style="min-width:640px">
+<svg viewBox="0 0 760 360" role="img" aria-label="あなた（ブラウザ）が Cookie（札）を添えて Nginx（受付）へ行き、Nginx は oauth2-proxy（確認係）に Cookie が有効か聞く。初回は oauth2-proxy が Keycloak（窓口）へ案内し、JWT（身分証）をもらう。Nginx は JWT を付けてアプリ（Nuxt、BFF、API）へ渡す" class="arch" style="min-width:640px">
   <defs>
     <marker id="arr-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
     <marker id="arr-b-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-k"/></marker>
@@ -81,205 +82,206 @@
   <text x="85" y="173" text-anchor="middle" class="t13">あなた</text>
   <text x="75" y="192" text-anchor="middle" class="t12 tm">（ブラウザ）</text>
   <use href="#i-cookie" class="ic c" x="22" y="203" width="13" height="13"/>
-  <text x="40" y="214" text-anchor="start" class="t12 tc">札（Cookie）</text>
+  <text x="40" y="214" text-anchor="start" class="t12 tc">Cookie（札）</text>
 
   <!-- 受付 -->
   <rect x="220" y="150" width="200" height="80" rx="10" class="box"/>
   <use href="#i-nginx" class="ic" x="230" y="160" width="16" height="16"/>
-  <text x="330" y="173" text-anchor="middle" class="t13">受付 ・ Nginx</text>
-  <text x="320" y="193" text-anchor="middle" class="t12 tm">URL を見て奥へ案内する</text>
-  <text x="320" y="212" text-anchor="middle" class="t12 tm">通す前に確認係へ聞く</text>
+  <text x="330" y="173" text-anchor="middle" class="t13">Nginx（受付）</text>
+  <text x="320" y="193" text-anchor="middle" class="t12 tm">URL を見てアプリへ渡す</text>
+  <text x="320" y="212" text-anchor="middle" class="t12 tm">渡す前に oauth2-proxy へ聞く</text>
 
   <!-- 確認係 -->
   <rect x="220" y="260" width="200" height="80" rx="10" class="box c"/>
   <use href="#i-cookie" class="ic c" x="228" y="270" width="16" height="16"/>
-  <text x="332" y="283" text-anchor="middle" class="t13">確認係 ・ oauth2-proxy</text>
-  <text x="320" y="303" text-anchor="middle" class="t12 tm">札が有効かを答える</text>
-  <text x="320" y="322" text-anchor="middle" class="t12 tm">初回は札を作って渡す</text>
+  <text x="332" y="283" text-anchor="middle" class="t13">oauth2-proxy（確認係）</text>
+  <text x="320" y="303" text-anchor="middle" class="t12 tm">Cookie が有効かを答える</text>
+  <text x="320" y="322" text-anchor="middle" class="t12 tm">初回は Cookie を作って渡す</text>
 
   <!-- 窓口 -->
   <rect x="540" y="260" width="200" height="80" rx="10" class="box k"/>
   <use href="#i-keycloak" class="ic k" x="577" y="270" width="16" height="16"/>
-  <text x="651" y="283" text-anchor="middle" class="t13">窓口 ・ Keycloak</text>
+  <text x="651" y="283" text-anchor="middle" class="t13">Keycloak（窓口）</text>
   <text x="640" y="303" text-anchor="middle" class="t12 tm">ID とパスワードを確かめる</text>
   <use href="#i-passport" class="ic jwt" x="572" y="311" width="13" height="13"/>
-  <text x="590" y="322" text-anchor="start" class="t12 tj">身分証（JWT）を出す</text>
+  <text x="590" y="322" text-anchor="start" class="t12 tj">JWT（身分証）を出す</text>
 
   <!-- 奥の部屋 -->
   <rect x="540" y="20" width="200" height="210" rx="10" class="box"/>
-  <text x="640" y="42" text-anchor="middle" class="t13">奥の部屋</text>
-  <text x="640" y="60" text-anchor="middle" class="t12 tm">身分証を見て仕事をする</text>
+  <text x="640" y="42" text-anchor="middle" class="t13">アプリ（奥の部屋）</text>
+  <text x="640" y="60" text-anchor="middle" class="t12 tm">JWT を見て処理する</text>
   <rect x="550" y="72" width="180" height="40" rx="6" class="box"/>
   <use href="#i-nuxt" class="ic" x="560" y="84" width="15" height="15"/>
   <text x="582" y="97" text-anchor="start" class="t12">画面 ・ Nuxt</text>
   <rect x="550" y="120" width="180" height="40" rx="6" class="box"/>
   <use href="#i-lock" class="ic" x="561" y="132" width="13" height="13"/>
-  <text x="582" y="145" text-anchor="start" class="t12">BFF ・ 身分証を検める</text>
+  <text x="582" y="145" text-anchor="start" class="t12">BFF ・ JWT を確かめる</text>
   <rect x="550" y="168" width="180" height="40" rx="6" class="box"/>
   <use href="#i-database" class="ic" x="561" y="180" width="13" height="13"/>
   <text x="582" y="193" text-anchor="start" class="t12">API ・ データを出す</text>
 
   <!-- 線 -->
   <line x1="140" y1="190" x2="220" y2="190" class="ln c" marker-end="url(#arr-b)"/>
-  <text x="180" y="182" text-anchor="middle" class="t12 tc">札を添えて</text>
+  <text x="180" y="166" text-anchor="middle" class="t12 tc">Cookie を</text>
+  <text x="180" y="182" text-anchor="middle" class="t12 tc">添えて</text>
   <line x1="320" y1="230" x2="320" y2="260" class="ln" marker-start="url(#arr-b)" marker-end="url(#arr-b)"/>
-  <text x="330" y="250" text-anchor="start" class="t12">この札、有効？</text>
+  <text x="330" y="250" text-anchor="start" class="t12">この Cookie、有効？</text>
   <line x1="420" y1="304" x2="540" y2="304" class="ln k" marker-start="url(#arr-b-k)" marker-end="url(#arr-b-k)"/>
   <text x="480" y="295" text-anchor="middle" class="t12 tk">初回だけ案内</text>
-  <text x="480" y="321" text-anchor="middle" class="t12 tk">身分証をもらう</text>
+  <text x="480" y="321" text-anchor="middle" class="t12 tk">JWT をもらう</text>
   <line x1="420" y1="190" x2="540" y2="190" class="ln jwt" marker-end="url(#arr-b-j)"/>
-  <text x="480" y="182" text-anchor="middle" class="t12 tj">身分証を付けて</text>
+  <text x="480" y="182" text-anchor="middle" class="t12 tj">JWT を付けて</text>
 </svg>
 </div>
-<figcaption>札（Cookie）はあなたが持ち、身分証（JWT）は札の中に包まれています。受付も確認係も「あなたが誰か」を自分では確かめません。確かめるのは窓口だけで、2 回目からは札が窓口の代わりをします。実際には、確認係に案内されたあなた（ブラウザ）が窓口へ行き、戻ってきた身分証を確認係が札に包みます。</figcaption>
+<figcaption>Cookie（札）はブラウザが持ち、JWT（身分証）は Cookie の中に包まれています。Nginx も oauth2-proxy も「あなたが誰か」を自分では確かめません。確かめるのは Keycloak だけで、2 回目からは Cookie が Keycloak の代わりをします。実際には、oauth2-proxy に案内されたブラウザが Keycloak へ行き、受け取った JWT を oauth2-proxy が Cookie に包みます。</figcaption>
 </figure>
 
 <!-- ======================================================================= -->
 <h2 id="cast"><span class="no">02</span>登場人物と、まず覚える言葉</h2>
-<p>図の例えと、実際の名前の対応です。以後の図でも同じ役割には同じアイコンと色を使います。</p>
+<p>図に出てくるものの実際の名前と、括弧の中が例えです。以後の図でも同じ役割には同じアイコンと色を使います。</p>
 <ul class="legend" aria-label="図中のアイコンの意味">
   <li><svg class="ic c" aria-hidden="true"><use href="#i-user"/></svg>あなた（ブラウザ）</li>
-  <li><svg class="ic c" aria-hidden="true"><use href="#i-cookie"/></svg>札 = Cookie（ブラウザが持つ）</li>
-  <li><svg class="ic" aria-hidden="true"><use href="#i-nginx"/></svg>受付 = Nginx（URL を見て案内）</li>
-  <li><svg class="ic c" aria-hidden="true"><use href="#i-cookie"/></svg>確認係 = oauth2-proxy（札の発行と確認）</li>
-  <li><svg class="ic k" aria-hidden="true"><use href="#i-keycloak"/></svg>窓口 = Keycloak（本人確認）</li>
-  <li><svg class="ic jwt" aria-hidden="true"><use href="#i-passport"/></svg>身分証 = JWT（窓口が出す）</li>
-  <li><svg class="ic" aria-hidden="true"><use href="#i-nuxt"/></svg>画面 = Nuxt</li>
-  <li><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>BFF（身分証を検める）</li>
-  <li><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg>API（データ）</li>
+  <li><svg class="ic c" aria-hidden="true"><use href="#i-cookie"/></svg>Cookie（札）。ブラウザが持つ</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-nginx"/></svg>Nginx（受付）。URL を見て渡す先を決める</li>
+  <li><svg class="ic c" aria-hidden="true"><use href="#i-cookie"/></svg>oauth2-proxy（確認係）。Cookie の発行と確認</li>
+  <li><svg class="ic k" aria-hidden="true"><use href="#i-keycloak"/></svg>Keycloak（窓口）。本人確認</li>
+  <li><svg class="ic jwt" aria-hidden="true"><use href="#i-passport"/></svg>JWT（身分証）。Keycloak が出す</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-nuxt"/></svg>Nuxt。画面</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>BFF。JWT を確かめる</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg>API。データを出す</li>
 </ul>
 
 <h3>まず覚える言葉（8 つ）</h3>
 <ul class="glossary">
-  <li><b>Cookie（札）</b><span>サーバーが「次に来るとき見せて」とブラウザに持たせる小さなメモ。ブラウザは同じサイトへ行くたびに自動で添える。ここでは「ログイン済み」の札</span></li>
+  <li><b>Cookie（札）</b><span>サーバーが「次に来るとき見せて」とブラウザに持たせる小さなメモ。ブラウザは同じサイトへ行くたびに自動で添える。ここでは「ログイン済み」を示すもの</span></li>
   <li><b>キャッシュ</b><span>Cookie と混同しやすい別物。同じものを取りに行かないための保存で、速さのためにある。Cookie は「誰か（前と同じ人か）」を伝えるためにある</span></li>
-  <li><b>Nginx（受付）</b><span>全部のリクエストを最初に受け、URL（ホスト名とパス）を見て奥の Nuxt や BFF に渡す。渡す前に確認係へ「ログイン済み？」と聞く。AWS では ALB がこの役</span></li>
-  <li><b>oauth2-proxy（確認係）</b><span>ログインの手続きを丸ごと引き受ける小さなプログラム。初回は窓口へ案内して札を作り、2 回目からは札が有効かを答える。アプリ自身は手続きを知らずに済む</span></li>
-  <li><b>Keycloak（窓口）</b><span>ユーザーを預かり、ID とパスワードを確かめ、身分証を出す本人確認の窓口。一般には IdP（Identity Provider）と呼ぶ。社員向けは AWS で Okta になる</span></li>
-  <li><b>JWT（身分証）</b><span>窓口が出す身分証。「誰か、いつまで有効か」が書かれ、偽造できない印（署名）つき。札の中に包まれて運ばれ、奥の部屋の BFF が検める</span></li>
-  <li><b>セッション</b><span>「ログイン済み」の状態が続いていること。札（Cookie）がその証。札の期限が切れると、もう一度窓口へ行く</span></li>
+  <li><b>Nginx（受付）</b><span>全部のリクエストを最初に受け、URL（ホスト名とパス）を見て奥の Nuxt や BFF に渡す。渡す前に oauth2-proxy へ「ログイン済み？」と聞く。AWS では ALB がこの役</span></li>
+  <li><b>oauth2-proxy（確認係）</b><span>ログインの手続きを丸ごと引き受ける小さなプログラム。初回はブラウザを Keycloak へ案内して Cookie を作り、2 回目からは Cookie が有効かを答える。アプリ自身は手続きを知らずに済む</span></li>
+  <li><b>Keycloak（窓口）</b><span>ユーザーを預かり、ID とパスワードを確かめ、JWT を出す。一般には IdP（Identity Provider）と呼ぶ。社員向けは AWS で Okta になる</span></li>
+  <li><b>JWT（身分証）</b><span>Keycloak が出す身分証。「誰か、いつまで有効か」が書かれ、偽造できない署名つき。Cookie の中に包まれて運ばれ、BFF が署名を確かめる</span></li>
+  <li><b>セッション</b><span>「ログイン済み」の状態が続いていること。Cookie がその証。Cookie の期限が切れると、もう一度 Keycloak でログインする</span></li>
   <li><b>OAuth2 と OIDC</b><span>手続きの名前。OAuth2 は「許可を取る」仕組みで、その上に「ログイン」を載せたものが OIDC。oauth2-proxy が窓口と話すときに使うのは OIDC</span></li>
 </ul>
 
-<div class="callout"><p><strong>次に読むページ。</strong>ここまで分かれば <a href="../auth/authentication-authorization.html">認証・認可の図解</a> が読めます。あちらでは、受付と確認係が「門 1」、BFF が「門 2」、認可 API（してよいかを決める係）が「門 3」として出てきます。</p></div>
+<div class="callout"><p><strong>次に読むページ。</strong>ここまで分かれば <a href="../auth/authentication-authorization.html">認証・認可の図解</a> が読めます。あちらでは、Nginx と oauth2-proxy が「門 1」、BFF が「門 2」、認可 API（操作してよいかを決める API）が「門 3」として出てきます。</p></div>
 
 <div class="layer-head l2"><span class="tag">層 2</span><span class="name">流れ</span><small>初めて来たときと、2 回目から。各節の先頭に要約</small></div>
 
 <!-- ======================================================================= -->
-<h2 id="first"><span class="no">03</span>初めて来たとき: 札をもらうまで</h2>
-<p>札を持っていないあなたが画面を開いてから、札をもらうまでです。窓口に行くのはこの 1 回だけで、パスワードを受け取るのも窓口だけです。</p>
+<h2 id="first"><span class="no">03</span>初めて開いたとき: Cookie をもらうまで</h2>
+<p>Cookie を持っていないブラウザで画面を開いてから、Cookie をもらうまでです。Keycloak に行くのはこの 1 回だけで、パスワードを受け取るのも Keycloak だけです。</p>
 <ol class="strip">
-  <li><b>札が無い</b>受付が確認係に聞くと「札が無い」。受付はあなたを窓口へ案内する</li>
-  <li><b>窓口で本人確認</b>あなたが窓口で ID とパスワードを入れる。受付も確認係もパスワードを見ない</li>
-  <li><b>引換券を持って戻る</b>窓口は身分証を直接は渡さず、引換券（code）をくれる。あなたはそれを確認係に渡す</li>
-  <li><b>札をもらう</b>確認係が引換券を窓口で身分証に換え、札に包んであなたに渡す。以後はこの札で通る</li>
+  <li><b>Cookie が無い</b>Nginx が oauth2-proxy に聞くと「Cookie が無い」。ブラウザは Keycloak のログイン画面へリダイレクトされる</li>
+  <li><b>Keycloak で本人確認</b>あなたが Keycloak の画面で ID とパスワードを入れる。Nginx も oauth2-proxy もパスワードを見ない</li>
+  <li><b>認可コードを持って戻る</b>Keycloak は JWT を直接は渡さず、認可コード（code）を返す。ブラウザはそれを oauth2-proxy に渡す</li>
+  <li><b>Cookie をもらう</b>oauth2-proxy が認可コードを Keycloak で JWT に交換し、Cookie に包んでブラウザに渡す。以後はこの Cookie で通る</li>
 </ol>
 
 <figure>
 <div class="fig-scroll">
-<svg viewBox="0 0 1020 470" role="img" aria-label="初回の流れ。あなた、受付、確認係、窓口の間の 9 ステップ" class="seq">
+<svg viewBox="0 0 1020 470" role="img" aria-label="初回の流れ。ブラウザ、Nginx、oauth2-proxy、Keycloak の間の 9 ステップ" class="seq">
 <defs><marker id="arr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="arr-f-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker></defs>
 <line x1="150" y1="52" x2="150" y2="462" class="life"/>
 <rect x="55" y="18" width="190" height="34" rx="6" class="pbox"/>
 <use href="#i-user" class="ic c" x="65" y="27" width="16" height="16"/>
-<text x="163" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">あなた（ブラウザ）</text>
+<text x="163" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
 <line x1="390" y1="52" x2="390" y2="462" class="life"/>
 <rect x="295" y="18" width="190" height="34" rx="6" class="pbox"/>
 <use href="#i-nginx" class="ic" x="305" y="27" width="16" height="16"/>
-<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">受付 ・ Nginx</text>
+<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
 <line x1="630" y1="52" x2="630" y2="462" class="life"/>
 <rect x="535" y="18" width="190" height="34" rx="6" class="pbox lane-p"/>
 <use href="#i-cookie" class="ic c" x="545" y="27" width="16" height="16"/>
-<text x="643" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">確認係 ・ oauth2-proxy</text>
+<text x="643" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
 <line x1="870" y1="52" x2="870" y2="462" class="life"/>
 <rect x="775" y="18" width="190" height="34" rx="6" class="pbox lane-k"/>
 <use href="#i-keycloak" class="ic k" x="785" y="27" width="16" height="16"/>
-<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">窓口 ・ Keycloak</text>
+<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Keycloak</text>
 <line x1="150" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-f)"/>
-<text x="270" y="77" text-anchor="middle" font-size="12" class="msglabel">① 画面を開く（札なし）</text>
+<text x="270" y="77" text-anchor="middle" font-size="12" class="msglabel">① 画面を開く（Cookie なし）</text>
 <line x1="390" y1="124" x2="630" y2="124" class="msg" marker-end="url(#arr-f)"/>
 <text x="510" y="117" text-anchor="middle" font-size="12" class="msglabel">② この人、ログイン済み？</text>
 <line x1="630" y1="164" x2="390" y2="164" class="msg ret" marker-end="url(#arr-f)"/>
-<text x="510" y="157" text-anchor="middle" font-size="12" class="msglabel">③ 札が無い。窓口へ案内して</text>
+<text x="510" y="157" text-anchor="middle" font-size="12" class="msglabel">③ Cookie が無い。Keycloak へ案内して</text>
 <line x1="390" y1="204" x2="150" y2="204" class="msg ret" marker-end="url(#arr-f)"/>
-<text x="270" y="197" text-anchor="middle" font-size="12" class="msglabel">④ 窓口へどうぞ（302）</text>
+<text x="270" y="197" text-anchor="middle" font-size="12" class="msglabel">④ Keycloak へリダイレクト（302）</text>
 <line x1="150" y1="244" x2="870" y2="244" class="msg ln-k" marker-end="url(#arr-f)"/>
-<text x="510" y="237" text-anchor="middle" font-size="12" class="msglabel">⑤ 窓口の画面で ID とパスワードを入れる</text>
+<text x="510" y="237" text-anchor="middle" font-size="12" class="msglabel">⑤ Keycloak の画面で ID とパスワードを入れる</text>
 <line x1="870" y1="284" x2="150" y2="284" class="msg ret ln-k" marker-end="url(#arr-f)"/>
-<text x="510" y="277" text-anchor="middle" font-size="12" class="msglabel">⑥ 本人確認 OK。引換券（code）を持って戻る</text>
+<text x="510" y="277" text-anchor="middle" font-size="12" class="msglabel">⑥ 本人確認 OK。認可コード（code）を持って戻る</text>
 <line x1="150" y1="324" x2="630" y2="324" class="msg" marker-end="url(#arr-f)"/>
-<text x="390" y="317" text-anchor="middle" font-size="12" class="msglabel">⑦ 引換券を確認係に渡す（受付が中継）</text>
+<text x="390" y="317" text-anchor="middle" font-size="12" class="msglabel">⑦ 認可コードを oauth2-proxy に渡す（Nginx が中継）</text>
 <line x1="630" y1="364" x2="870" y2="364" class="msg ln-k" marker-end="url(#arr-f)"/>
-<text x="750" y="357" text-anchor="middle" font-size="12" class="msglabel">⑧ 引換券を身分証（JWT）に換える</text>
+<text x="750" y="357" text-anchor="middle" font-size="12" class="msglabel">⑧ 認可コードを JWT に交換する</text>
 <line x1="630" y1="404" x2="150" y2="404" class="msg ret ln-jwt" marker-end="url(#arr-f-jwt)"/>
-<text x="390" y="397" text-anchor="middle" font-size="12" class="msglabel">⑨ 身分証を札に包んで渡す（Set-Cookie）</text>
+<text x="390" y="397" text-anchor="middle" font-size="12" class="msglabel">⑨ JWT を Cookie に包んで渡す（Set-Cookie）</text>
 <rect x="60" y="424" width="580" height="24" rx="5" class="note"/>
-<text x="350" y="441" text-anchor="middle" font-size="11" class="notetext">以後、あなたは札を持っている。身分証そのものは札の中で、あなたには見えない</text>
+<text x="350" y="441" text-anchor="middle" font-size="11" class="notetext">以後、ブラウザは Cookie を持っている。JWT は暗号化された Cookie の中にあり、ブラウザからは読めない</text>
 </svg>
 </div>
-<figcaption>窓口とのやり取り（橙）は 2 回。⑤ はあなたが直接、⑧ は確認係が裏側で行います。⑥ で身分証ではなく引換券を渡すのは、身分証がブラウザの画面や履歴に残らないようにするためです。実際の URL とヘッダー名は認証・認可のページの 04 にあります。</figcaption>
+<figcaption>Keycloak とのやり取り（橙）は 2 回。⑤ はブラウザが直接、⑧ は oauth2-proxy が裏側で行います。⑥ で JWT ではなく認可コードを渡すのは、JWT がブラウザの画面や履歴に残らないようにするためです。実際の URL とヘッダー名は認証・認可のページの 04 にあります。</figcaption>
 </figure>
 
 <!-- ======================================================================= -->
-<h2 id="next"><span class="no">04</span>2 回目から: 札で通る</h2>
-<p>札を持っているあなたが画面を開くときです。窓口には行きません。確認係が札を開けて身分証を取り出し、受付がそれを奥の部屋へ付けて渡します。</p>
+<h2 id="next"><span class="no">04</span>2 回目から: Cookie で通る</h2>
+<p>Cookie を持っているブラウザで画面を開くときです。Keycloak には行きません。oauth2-proxy が Cookie を復号して JWT を取り出し、Nginx がそれを付けて BFF へ渡します。</p>
 <ol class="strip">
-  <li><b>札つきで受付へ</b>ブラウザが自動で札を添える。あなたは何もしない</li>
-  <li><b>受付が確認係に聞く</b>「この札、有効？」。受付は自分では札を開けない</li>
-  <li><b>確認係が身分証を返す</b>札を開けて中の身分証を受付に渡す。期限が近ければ裏で新しい札に替える</li>
-  <li><b>身分証を付けて奥へ</b>受付が身分証を付けて渡す。奥の BFF が身分証を検めてから仕事をする</li>
+  <li><b>Cookie つきで Nginx へ</b>ブラウザが自動で Cookie を添える。あなたは何もしない</li>
+  <li><b>Nginx が oauth2-proxy に聞く</b>「この Cookie、有効？」。Nginx は自分では Cookie を復号しない</li>
+  <li><b>oauth2-proxy が JWT を返す</b>Cookie を復号して中の JWT を Nginx に渡す。JWT の期限が近ければ、裏で Keycloak から新しい JWT をもらい、Cookie を作り直す</li>
+  <li><b>JWT を付けて BFF へ</b>Nginx が JWT をヘッダーに付けて渡す。BFF は JWT の署名を確かめてから処理する</li>
 </ol>
 
 <figure>
 <div class="fig-scroll">
-<svg viewBox="0 0 1020 300" role="img" aria-label="2 回目以降の流れ。あなた、受付、確認係、奥の部屋（BFF）の間の 5 ステップ" class="seq">
+<svg viewBox="0 0 1020 300" role="img" aria-label="2 回目以降の流れ。ブラウザ、Nginx、oauth2-proxy、BFF の間の 5 ステップ" class="seq">
 <defs><marker id="arr-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker><marker id="arr-n-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker></defs>
 <line x1="150" y1="52" x2="150" y2="292" class="life"/>
 <rect x="55" y="18" width="190" height="34" rx="6" class="pbox"/>
 <use href="#i-user" class="ic c" x="65" y="27" width="16" height="16"/>
-<text x="163" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">あなた（ブラウザ）</text>
+<text x="163" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">ブラウザ</text>
 <line x1="390" y1="52" x2="390" y2="292" class="life"/>
 <rect x="295" y="18" width="190" height="34" rx="6" class="pbox"/>
 <use href="#i-nginx" class="ic" x="305" y="27" width="16" height="16"/>
-<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">受付 ・ Nginx</text>
+<text x="403" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">Nginx</text>
 <line x1="630" y1="52" x2="630" y2="292" class="life"/>
 <rect x="535" y="18" width="190" height="34" rx="6" class="pbox lane-p"/>
 <use href="#i-cookie" class="ic c" x="545" y="27" width="16" height="16"/>
-<text x="643" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">確認係 ・ oauth2-proxy</text>
+<text x="643" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">oauth2-proxy</text>
 <line x1="870" y1="52" x2="870" y2="292" class="life"/>
 <rect x="775" y="18" width="190" height="34" rx="6" class="pbox"/>
 <use href="#i-lock" class="ic" x="785" y="27" width="16" height="16"/>
-<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">奥の部屋 ・ BFF</text>
+<text x="883" y="40" text-anchor="middle" font-size="12" font-weight="700" class="pname">BFF</text>
 <line x1="150" y1="84" x2="390" y2="84" class="msg" marker-end="url(#arr-n)"/>
-<text x="270" y="77" text-anchor="middle" font-size="12" class="msglabel">① 画面を開く（札つき）</text>
+<text x="270" y="77" text-anchor="middle" font-size="12" class="msglabel">① 画面を開く（Cookie つき）</text>
 <line x1="390" y1="124" x2="630" y2="124" class="msg" marker-end="url(#arr-n)"/>
-<text x="510" y="117" text-anchor="middle" font-size="12" class="msglabel">② この札、有効？</text>
+<text x="510" y="117" text-anchor="middle" font-size="12" class="msglabel">② この Cookie、有効？</text>
 <line x1="630" y1="164" x2="390" y2="164" class="msg ret ln-jwt" marker-end="url(#arr-n-jwt)"/>
-<text x="510" y="157" text-anchor="middle" font-size="12" class="msglabel">③ 有効。中の身分証はこれ</text>
+<text x="510" y="157" text-anchor="middle" font-size="12" class="msglabel">③ 有効。中の JWT はこれ</text>
 <line x1="390" y1="204" x2="870" y2="204" class="msg ln-jwt" marker-end="url(#arr-n-jwt)"/>
-<text x="630" y="197" text-anchor="middle" font-size="12" class="msglabel">④ 身分証を付けて渡す（ヘッダー）</text>
+<text x="630" y="197" text-anchor="middle" font-size="12" class="msglabel">④ JWT をヘッダーに付けて渡す</text>
 <line x1="870" y1="244" x2="150" y2="244" class="msg ret" marker-end="url(#arr-n)"/>
-<text x="510" y="237" text-anchor="middle" font-size="12" class="msglabel">⑤ 身分証を検めてから、画面やデータを返す</text>
+<text x="510" y="237" text-anchor="middle" font-size="12" class="msglabel">⑤ JWT を確かめてから、画面やデータを返す</text>
 </svg>
 </div>
-<figcaption>黄色の線が身分証（JWT）の通り道です。あなたの手元には札しかなく、身分証は確認係が取り出してから奥へ運ばれます。奥の BFF は身分証の印を自分でも検めます（認証・認可のページの 05）。</figcaption>
+<figcaption>黄色の線が JWT の通り道です。ブラウザの手元には Cookie しかなく、JWT は oauth2-proxy が取り出してから BFF へ運ばれます。BFF は JWT の署名を自分でも確かめます（認証・認可のページの 05）。</figcaption>
 </figure>
 
-<div class="layer-head l3"><span class="tag">層 3</span><span class="name">設定と根拠</span><small>例えを実物に戻すときに開く</small></div>
+<div class="layer-head l3"><span class="tag">層 3</span><span class="name">設定と根拠</span><small>例えと実物の対応表と、よくある誤解。開いて読む</small></div>
 
 <!-- ======================================================================= -->
 <h2 id="mapping"><span class="no">05</span>例えと実物の対応</h2>
-<p>このページの例えが、一般の言葉、このリポジトリの実物、AWS での置き換え先のどれに当たるかです。</p>
+<p>01 と 02 の例えが、一般の言葉、このリポジトリの実物、AWS での置き換え先のどれに当たるかです。</p>
 <details class="deep"><summary>対応表を開く <small>札、受付、確認係、窓口、身分証、引換券、奥の部屋</small></summary>
 <div class="tbl-wrap"><table>
 <thead><tr><th>例え</th><th>一般の言葉</th><th>このリポジトリでは</th><th>AWS では</th><th>詳しくは</th></tr></thead>
 <tbody>
 <tr><td class="k">札</td><td>セッション Cookie</td><td><code>_fsl_customer</code> / <code>_fsl_staff</code>。中身は暗号化。8 時間で期限切れ</td><td><code>AWSELBAuthSessionCookie-*</code></td><td><a href="../auth/authentication-authorization.html#login">認証・認可 04</a></td></tr>
-<tr><td class="k">受付</td><td>リバースプロキシ、入口</td><td>Nginx。<code>auth_request</code> で確認係に聞く</td><td>ALB のリスナールール</td><td><a href="../auth/authentication-authorization.html#gates">認証・認可 01</a>、<a href="../aws/aws-architecture.html#alb">AWS 02</a></td></tr>
+<tr><td class="k">受付</td><td>リバースプロキシ、入口</td><td>Nginx。<code>auth_request</code> で oauth2-proxy に聞く</td><td>ALB のリスナールール</td><td><a href="../auth/authentication-authorization.html#gates">認証・認可 01</a>、<a href="../aws/aws-architecture.html#alb">AWS 02</a></td></tr>
 <tr><td class="k">確認係</td><td>OIDC クライアント、認証プロキシ</td><td>oauth2-proxy（一般利用者用と社員用の 2 つ）</td><td>ALB の <code>authenticate-oidc</code> アクション</td><td><a href="../auth/authentication-authorization.html#login">認証・認可 04</a></td></tr>
 <tr><td class="k">窓口</td><td>IdP（Identity Provider）</td><td>Keycloak（realm customer と realm staff）</td><td>Keycloak（一般利用者）と Okta（社員）</td><td><a href="../auth/authentication-authorization.html#keycloak">認証・認可 09</a></td></tr>
-<tr><td class="k">身分証</td><td>アクセストークン（JWT）</td><td><code>x-amzn-oidc-accesstoken</code> ヘッダーで運ぶ。寿命 5 分（確認係が 4 分ごとに更新）</td><td>同じヘッダー名。ALB が付ける</td><td><a href="../auth/authentication-authorization.html#signature">認証・認可 05</a>、<a href="../auth/authentication-authorization.html#jwt">08</a></td></tr>
-<tr><td class="k">引換券</td><td>認可コード（authorization code）</td><td><code>/oauth2/callback?code=…</code> で確認係に届く</td><td>同じ（ALB が受け取る）</td><td><a href="../auth/authentication-authorization.html#login">認証・認可 04</a></td></tr>
+<tr><td class="k">身分証</td><td>アクセストークン（JWT）</td><td><code>x-amzn-oidc-accesstoken</code> ヘッダーで運ぶ。寿命 5 分（oauth2-proxy が 4 分ごとに更新）</td><td>同じヘッダー名。ALB が付ける</td><td><a href="../auth/authentication-authorization.html#signature">認証・認可 05</a>、<a href="../auth/authentication-authorization.html#jwt">08</a></td></tr>
+<tr><td class="k">引換券</td><td>認可コード（authorization code）</td><td><code>/oauth2/callback?code=…</code> で oauth2-proxy に届く</td><td>同じ（ALB が受け取る）</td><td><a href="../auth/authentication-authorization.html#login">認証・認可 04</a></td></tr>
 <tr><td class="k">奥の部屋</td><td>アプリケーション</td><td>Nuxt（画面）、BFF（門 2）、認可 API（門 3）、API</td><td>ECS on Fargate のタスク</td><td><a href="../auth/authentication-authorization.html#gates">認証・認可 01</a></td></tr>
 </tbody></table></div>
 </details>
@@ -289,11 +291,11 @@
 <p>初めて見たときにつまずきやすい点です。</p>
 <details class="deep"><summary>5 つの誤解を開く</summary>
 <ul class="qa">
-  <li><b>「Cookie はキャッシュのようなもの？」</b>違います。キャッシュは「同じものを取りに行かないための保存」で速さのため。Cookie は「あなたが誰か（前と同じ人か）」をサーバーに伝えるための札です。消すと速さは変わらず、ログインが外れます。</li>
-  <li><b>「ブラウザは JWT を持っている？」</b>持っていません。持っているのは暗号化された札（Cookie）で、開けられるのは確認係だけです。DevTools の Cookie 欄を見ても JWT は読めません。</li>
-  <li><b>「Nginx がログインを確認している？」</b>していません。受付は確認係に「有効？」と聞いて、答えに従うだけです。札を確かめるのは確認係、本人確認（パスワード）をするのは窓口です。</li>
+  <li><b>「Cookie はキャッシュのようなもの？」</b>違います。キャッシュは「同じものを取りに行かないための保存」で速さのため。Cookie は「あなたが誰か（前と同じ人か）」をサーバーに伝えるためのものです。消すと速さは変わらず、ログインが外れます。</li>
+  <li><b>「ブラウザは JWT を持っている？」</b>持っていません。持っているのは暗号化された Cookie で、復号できるのは oauth2-proxy だけです。DevTools の Cookie 欄を見ても JWT は読めません。</li>
+  <li><b>「Nginx がログインを確認している？」</b>していません。Nginx は oauth2-proxy に「有効？」と聞いて、答えに従うだけです。Cookie を確かめるのは oauth2-proxy、本人確認（パスワード）をするのは Keycloak です。</li>
   <li><b>「OAuth と書いてあるのに、ログイン（認証）に使うの？」</b>OAuth2 は本来「許可を取る」仕組みですが、その上に「ログイン」を載せた OIDC（OpenID Connect）があり、oauth2-proxy はそれを使います。名前に oauth2 と付いているだけで、やっていることはログインの代行です。</li>
-  <li><b>「ログインできたら、何でもできる？」</b>できません。身分証が答えるのは「誰か」だけです。「この操作をしてよいか」は別の係（認可 API）が決めます。認証・認可のページの「門 3」です。</li>
+  <li><b>「ログインできたら、何でもできる？」</b>できません。JWT が答えるのは「誰か」だけです。「この操作をしてよいか」は認可 API が決めます。認証・認可のページの「門 3」です。</li>
 </ul>
 </details>
 
