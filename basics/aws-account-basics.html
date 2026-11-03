@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- AWS アカウントの基礎。AWS アカウント、root ユーザー、IAM ユーザー、IAM ロール、ポリシー、Organizations、IAM Identity Center のアクセスポータルを説明する。
+     比喩（ビル、オーナー、合鍵、入館証、許可の紙）は層 1 の 01 の図と 02 の言葉だけで使い、層 2 からは実物の名前で書く。
+     一般的な仕組みの説明なので fullstack-lab の設定が変わっても中身は変わらない。例として出す名前と値だけ、fullstack-lab の作業に合わせる。
+     見た目は ../assets/notes.css（共通）。外部に依存するのは Google Fonts だけで、読めなくても代替フォントで表示できる。 -->
+<title>fullstack-lab AWS アカウントの基礎</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/notes.css">
+<style>
+/* このページだけの装飾。共通の見た目は ../assets/notes.css */
+.qa { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; max-width: 62em; }
+.qa li { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 14px; font-size: 14px; line-height: 1.7; }
+.qa li b { display: block; margin-bottom: 2px; }
+details.deep .tbl-wrap { margin: 12px 0; }
+.wrap > .tbl-wrap, .wrap > pre { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<!-- アイコンの定義。図と本文から <use href="#i-…"> で参照する。
+     Font Awesome Free 6.7.2（solid）: building, crown, key, id-badge, shield-halved, sitemap, door-open, user, envelope
+       https://fontawesome.com — License https://fontawesome.com/license/free（Icons: CC BY 4.0）Copyright 2024 Fonticons, Inc. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-building" viewBox="0 0 384 512"><path d="M48 0C21.5 0 0 21.5 0 48L0 464c0 26.5 21.5 48 48 48l96 0 0-80c0-26.5 21.5-48 48-48s48 21.5 48 48l0 80 96 0c26.5 0 48-21.5 48-48l0-416c0-26.5-21.5-48-48-48L48 0zM64 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm112-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zM80 96l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zM272 96l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16z"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 576 512"><path d="M309 106c11.4-7 19-19.7 19-34c0-22.1-17.9-40-40-40s-40 17.9-40 40c0 14.4 7.6 27 19 34L209.7 220.6c-9.1 18.2-32.7 23.4-48.6 10.7L72 160c5-6.7 8-15 8-24c0-22.1-17.9-40-40-40S0 113.9 0 136s17.9 40 40 40c.2 0 .5 0 .7 0L86.4 427.4c5.5 30.4 32 52.6 63 52.6l277.2 0c30.9 0 57.4-22.1 63-52.6L535.3 176c.2 0 .5 0 .7 0c22.1 0 40-17.9 40-40s-17.9-40-40-40s-40 17.9-40 40c0 9 3 17.3 8 24l-89.1 71.3c-15.9 12.7-39.5 7.5-48.6-10.7L309 106z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 512 512"><path d="M336 352c97.2 0 176-78.8 176-176S433.2 0 336 0S160 78.8 160 176c0 18.7 2.9 36.8 8.3 53.7L7 391c-4.5 4.5-7 10.6-7 17l0 80c0 13.3 10.7 24 24 24l80 0c13.3 0 24-10.7 24-24l0-40 40 0c13.3 0 24-10.7 24-24l0-40 40 0c6.4 0 12.5-2.5 17-7l33.3-33.3c16.9 5.4 35 8.3 53.7 8.3zM376 96a40 40 0 1 1 0 80 40 40 0 1 1 0-80z"/></symbol>
+  <symbol id="i-id-badge" viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-384c0-35.3-28.7-64-64-64L64 0zm96 320l64 0c44.2 0 80 35.8 80 80c0 8.8-7.2 16-16 16L96 416c-8.8 0-16-7.2-16-16c0-44.2 35.8-80 80-80zm-32-96a64 64 0 1 1 128 0 64 64 0 1 1 -128 0zM144 64l96 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-96 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></symbol>
+  <symbol id="i-shield-halved" viewBox="0 0 512 512"><path d="M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zm0 66.8l0 378.1C394 378 431.1 230.1 432 141.4L256 66.8s0 0 0 0z"/></symbol>
+  <symbol id="i-sitemap" viewBox="0 0 576 512"><path d="M208 80c0-26.5 21.5-48 48-48l64 0c26.5 0 48 21.5 48 48l0 64c0 26.5-21.5 48-48 48l-8 0 0 40 152 0c30.9 0 56 25.1 56 56l0 32 8 0c26.5 0 48 21.5 48 48l0 64c0 26.5-21.5 48-48 48l-64 0c-26.5 0-48-21.5-48-48l0-64c0-26.5 21.5-48 48-48l8 0 0-32c0-4.4-3.6-8-8-8l-152 0 0 40 8 0c26.5 0 48 21.5 48 48l0 64c0 26.5-21.5 48-48 48l-64 0c-26.5 0-48-21.5-48-48l0-64c0-26.5 21.5-48 48-48l8 0 0-40-152 0c-4.4 0-8 3.6-8 8l0 32 8 0c26.5 0 48 21.5 48 48l0 64c0 26.5-21.5 48-48 48l-64 0c-26.5 0-48-21.5-48-48l0-64c0-26.5 21.5-48 48-48l8 0 0-32c0-30.9 25.1-56 56-56l152 0 0-40-8 0c-26.5 0-48-21.5-48-48l0-64z"/></symbol>
+  <symbol id="i-door-open" viewBox="0 0 576 512"><path d="M320 32c0-9.9-4.5-19.2-12.3-25.2S289.8-1.4 280.2 1l-179.9 45C79 51.3 64 70.5 64 92.5L64 448l-32 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 192 0 32 0 0-32 0-448zM256 256c0 17.7-10.7 32-24 32s-24-14.3-24-32s10.7-32 24-32s24 14.3 24 32zm96-128l96 0 0 352c0 17.7 14.3 32 32 32l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-32 0 0-320c0-35.3-28.7-64-64-64l-96 0 0 64z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 448 512"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></symbol>
+  <symbol id="i-envelope" viewBox="0 0 512 512"><path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48L48 64zM0 176L0 384c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-208L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"/></symbol>
+</svg>
+
+<div class="wrap">
+
+<h1>fullstack-lab AWS アカウントの基礎</h1>
+<p class="lead">AWS の「アカウント」はログイン ID ではなく、リソースと請求をまとめる入れ物です。このページは、アカウントと、その中に入る人（root ユーザー、IAM ユーザー、IAM ロール）の関係を説明します。全体をつかむために 01 と 02 だけビルの例えを使い、03 からは実際の名前で書きます。ここに書いてあるのは一般的な仕組みで、例として出す名前と値は fullstack-lab の AWS フェーズで実際に作ったものです。</p>
+
+<div class="howto" aria-label="この資料の読み方">
+  <div class="lv l1"><b>層 1 ・ 全体像</b><span>5 分。01 と 02。アカウントと 3 種類の入り方、8 つの言葉。コンソール右上の表示が読めるようになる</span></div>
+  <div class="lv l2"><b>層 2 ・ 流れ</b><span>15 分。03〜05。アカウントを作ったら最初にやること、IAM ロールの使い道、会社での分け方</span></div>
+  <div class="lv l3"><b>層 3 ・ 設定と根拠</b><span>新しいサインアップ形式との違い、権限の決まり方、よくある誤解、確かめ方。折りたたんであるので開いて読む</span></div>
+</div>
+
+<nav class="toc" aria-label="目次">
+  <div class="group"><span class="lt l1">層 1 ・ 全体像</span><ol>
+    <li><span class="no">01</span><a href="#conclusion">結論: AWS アカウントは入れ物。入り方は 3 通り</a></li>
+    <li><span class="no">02</span><a href="#cast">登場人物と、まず覚える言葉</a></li>
+  </ol></div>
+  <div class="group"><span class="lt l2">層 2 ・ 流れ</span><ol>
+    <li><span class="no">03</span><a href="#setup">アカウントを作ったら最初にやること</a></li>
+    <li><span class="no">04</span><a href="#role">IAM ロールは何に使うか</a></li>
+    <li><span class="no">05</span><a href="#company">会社ではアカウントを複数持つ</a></li>
+  </ol></div>
+  <div class="group"><span class="lt l3">層 3 ・ 設定と根拠</span><ol>
+    <li><span class="no">06</span><a href="#signup">新しいサインアップ形式との違い</a></li>
+    <li><span class="no">07</span><a href="#policy">権限の決まり方</a></li>
+    <li><span class="no">08</span><a href="#faq">よくある誤解</a></li>
+    <li><span class="no">09</span><a href="#read">確かめ方と読む場所</a></li>
+  </ol></div>
+</nav>
+
+<div class="layer-head l1"><span class="tag">層 1</span><span class="name">全体像</span><small>5 分。ここだけで「どのアカウントに、誰として入っているか」が分かる</small></div>
+
+<!-- ======================================================================= -->
+<h2 id="conclusion"><span class="no">01</span>結論: AWS アカウントは入れ物。入り方は 3 通り</h2>
+<p>AWS アカウントは、リソース（ECR、ECS、RDS など）と請求をまとめる入れ物で、例えるならビル 1 棟です。人は、root ユーザー（オーナー）、IAM ユーザー（合鍵）、IAM ロール（入館証）のどれかとしてアカウントに入ります。root ユーザー以外は、ポリシー（許可の紙）に書かれた操作しかできません。</p>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 900 320" role="img" aria-label="左に 3 通りの入り方。root ユーザー（オーナー）は何でもできる。IAM ユーザー（合鍵）と IAM ロール（入館証）は、ポリシー（許可の紙）を通って、許された操作だけができる。右は AWS アカウント（ビル 1 棟）で、中にリソースがある" class="arch" style="min-width:640px">
+  <defs>
+    <marker id="arr-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
+    <marker id="arr-c-z" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-z"/></marker>
+  </defs>
+
+  <!-- オーナー -->
+  <rect x="10" y="20" width="210" height="76" rx="10" class="box"/>
+  <use href="#i-crown" class="ic" x="20" y="30" width="18" height="16"/>
+  <text x="122" y="45" text-anchor="middle" class="t13">root ユーザー（オーナー）</text>
+  <text x="115" y="66" text-anchor="middle" class="t12 tm">サインアップのメールで入る</text>
+  <text x="115" y="85" text-anchor="middle" class="t12 tm">何でもできる。普段は使わない</text>
+
+  <!-- 合鍵 -->
+  <rect x="10" y="125" width="210" height="76" rx="10" class="box"/>
+  <use href="#i-key" class="ic" x="21" y="135" width="15" height="15"/>
+  <text x="122" y="150" text-anchor="middle" class="t13">IAM ユーザー（合鍵）</text>
+  <text x="115" y="171" text-anchor="middle" class="t12 tm">root ユーザーが作る。ずっと有効</text>
+  <text x="115" y="190" text-anchor="middle" class="t12 tm">（人の普段の作業用）</text>
+
+  <!-- 入館証 -->
+  <rect x="10" y="230" width="210" height="76" rx="10" class="box"/>
+  <use href="#i-id-badge" class="ic jwt" x="22" y="240" width="13" height="16"/>
+  <text x="122" y="255" text-anchor="middle" class="t13">IAM ロール（入館証）</text>
+  <text x="115" y="276" text-anchor="middle" class="t12 tm">切り替えて使う。時間で失効</text>
+  <text x="115" y="295" text-anchor="middle" class="t12 tm">（GitHub Actions など）</text>
+
+  <!-- 許可の紙 -->
+  <rect x="290" y="125" width="150" height="181" rx="10" class="box z"/>
+  <use href="#i-shield-halved" class="ic z" x="300" y="135" width="16" height="16"/>
+  <text x="372" y="150" text-anchor="middle" class="t13">ポリシー</text>
+  <text x="365" y="171" text-anchor="middle" class="t12 tz">（許可の紙）</text>
+  <text x="365" y="203" text-anchor="middle" class="t12 tm">してよい操作を</text>
+  <text x="365" y="221" text-anchor="middle" class="t12 tm">書いたもの</text>
+  <text x="365" y="253" text-anchor="middle" class="t12 tm">書いていない操作は</text>
+  <text x="365" y="271" text-anchor="middle" class="t12 tm">できない</text>
+
+  <!-- ビル -->
+  <rect x="500" y="10" width="390" height="300" rx="12" class="box"/>
+  <use href="#i-building" class="ic" x="514" y="22" width="15" height="20"/>
+  <text x="538" y="38" class="t13">AWS アカウント（ビル 1 棟）</text>
+  <text x="514" y="62" class="t12 tm">アカウント名と 12 桁のアカウント ID で区別する</text>
+  <text x="514" y="80" class="t12 tm">請求書はアカウント単位で届く</text>
+  <text x="514" y="108" class="t12">リソース（例。ビルの部屋に当たる）</text>
+  <rect x="514" y="118" width="110" height="40" rx="6" class="box"/><text x="569" y="143" text-anchor="middle" class="t12">ECR</text>
+  <rect x="636" y="118" width="110" height="40" rx="6" class="box"/><text x="691" y="143" text-anchor="middle" class="t12">ECS</text>
+  <rect x="758" y="118" width="110" height="40" rx="6" class="box"/><text x="813" y="143" text-anchor="middle" class="t12">RDS</text>
+  <rect x="514" y="170" width="110" height="40" rx="6" class="box"/><text x="569" y="195" text-anchor="middle" class="t12">ALB</text>
+  <rect x="636" y="170" width="110" height="40" rx="6" class="box"/><text x="691" y="195" text-anchor="middle" class="t12">VPC</text>
+  <rect x="758" y="170" width="110" height="40" rx="6" class="box"/><text x="813" y="195" text-anchor="middle" class="t12">S3</text>
+  <text x="514" y="250" class="t12 tm">IAM ユーザー・ロール・ポリシーも、</text>
+  <text x="514" y="268" class="t12 tm">このアカウントの中で作って管理する</text>
+
+  <!-- 線 -->
+  <line x1="220" y1="58" x2="498" y2="58" class="ln" marker-end="url(#arr-c)"/>
+  <text x="360" y="50" text-anchor="middle" class="t12">何でもできる</text>
+  <line x1="220" y1="163" x2="288" y2="163" class="ln" marker-end="url(#arr-c)"/>
+  <line x1="220" y1="268" x2="288" y2="268" class="ln" marker-end="url(#arr-c)"/>
+  <line x1="440" y1="215" x2="498" y2="215" class="ln z" marker-end="url(#arr-c-z)"/>
+  <text x="470" y="238" text-anchor="middle" class="t12 tz">許された</text>
+  <text x="470" y="255" text-anchor="middle" class="t12 tz">操作だけ</text>
+</svg>
+</div>
+<figcaption>AWS アカウントはリソースと請求の入れ物で、ログイン ID ではありません。IAM ユーザーと IAM ロールはポリシー（青）を通りますが、root ユーザーは通りません。root ユーザーは誰にも制限できないので、MFA を付けて普段は使わず、IAM ユーザーかロールで作業します。</figcaption>
+</figure>
+
+<!-- ======================================================================= -->
+<h2 id="cast"><span class="no">02</span>登場人物と、まず覚える言葉</h2>
+<p>実際の名前と、01 の図で使った例えの対応です。03 からは実際の名前だけで書き、同じ役割には同じアイコンを使います。</p>
+<ul class="legend" aria-label="図中のアイコンの意味">
+  <li><svg class="ic" aria-hidden="true"><use href="#i-building"/></svg>AWS アカウント（ビル）</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-crown"/></svg>root ユーザー（オーナー）</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg>IAM ユーザー（合鍵）</li>
+  <li><svg class="ic jwt" aria-hidden="true"><use href="#i-id-badge"/></svg>IAM ロール（入館証。一時的）</li>
+  <li><svg class="ic z" aria-hidden="true"><use href="#i-shield-halved"/></svg>ポリシー（許可の紙）</li>
+  <li><svg class="ic" aria-hidden="true"><use href="#i-sitemap"/></svg>Organizations（複数アカウントの管理）</li>
+  <li><svg class="ic s" aria-hidden="true"><use href="#i-door-open"/></svg>アクセスポータル（IAM Identity Center）</li>
+  <li><svg class="ic s" aria-hidden="true"><use href="#i-user"/></svg>社員（会社の人）</li>
+</ul>
+
+<h3>まず覚える言葉（8 つ）</h3>
+<ul class="glossary">
+  <li><b>AWS アカウント</b><span>リソースを入れる入れ物で、請求書が届く単位。ログイン ID のことではない（例えるならビル 1 棟）</span></li>
+  <li><b>アカウント ID</b><span>アカウントを区別する 12 桁の数字。アカウント名は表示用の名前で、あとから変えられる</span></li>
+  <li><b>root ユーザー</b><span>アカウントを作ったときにできる持ち主。サインアップに使ったメールとパスワードで入る。何でもでき、誰にも制限できない</span></li>
+  <li><b>IAM ユーザー</b><span>アカウントの中に作る、人ごとのログイン ID。パスワードでコンソールに入る。ずっと有効</span></li>
+  <li><b>IAM ロール</b><span>持ち主のいない権限のまとまり。許された人や仕組み（GitHub Actions など）が一時的に切り替えて使い、時間がたつと失効する</span></li>
+  <li><b>ポリシー</b><span>「どのリソースに何をしてよいか」を書いた JSON。IAM ユーザー、グループ、ロールに付ける。書いていないことはできない</span></li>
+  <li><b>MFA</b><span>パスワードに加えて、パスキーや認証アプリで本人だと示す仕組み（多要素認証）</span></li>
+  <li><b>Organizations</b><span>複数の AWS アカウントをまとめて管理する仕組み。会社で環境ごとにアカウントを分けるときに使う</span></li>
+</ul>
+
+<div class="callout"><p><strong>コンソール右上の表示の読み方。</strong>上の行の「アカウント名（12 桁の ID）」は<b>どのアカウントか</b>、下の行（例: <code>Administrator</code>）は<b>誰として入っているか</b>です。root ユーザーで入っているときは、下の行が出ません。アカウント名に <code>root</code> などの文字が入っていても、それは表示用の名前で、root ユーザーで入っているという意味ではありません。</p></div>
+
+<div class="layer-head l2"><span class="tag">層 2</span><span class="name">流れ</span><small>最初にやること、IAM ロールの使い道、会社での分け方。各節の先頭に要約</small></div>
+
+<!-- ======================================================================= -->
+<h2 id="setup"><span class="no">03</span>アカウントを作ったら最初にやること</h2>
+<p>AWS アカウントを作った直後は、サインアップに使ったメールとパスワードでログインする root ユーザーしかいません。root ユーザーは何でもできるので、乗っ取られると被害が大きくなります。そこで最初に次の 4 つを行い、以後の作業は root ユーザーではなく、自分用に作った IAM ユーザーで行います。</p>
+<ol class="strip">
+  <li><b>アカウントを作る</b>サインアップすると、アカウントと root ユーザーができる。プランと支払い方法もここで決める</li>
+  <li><b>root ユーザーに MFA を付ける</b>パスワードが漏れても、パスキーなどが無ければ入れないようにする</li>
+  <li><b>予算アラートを作る</b>Budgets で月の予算を決め、超えそうならメールを受け取る。通知だけで、課金は止まらない</li>
+  <li><b>自分用の IAM ユーザーを作る</b>管理者のグループに入れ、MFA を付ける。以後はこれでログインする</li>
+</ol>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 900 300" role="img" aria-label="fullstack-lab の AWS アカウントの中身の例。root ユーザーは MFA を付けてしまっておく。グループ Administrators に AdministratorAccess のポリシーを付け、IAM ユーザー Administrator を入れて MFA を付ける。予算アラートは月 10 ドル。GitHub Actions が切り替えて使う IAM ロールはフェーズ 3 で作る予定" class="arch" style="min-width:640px">
+  <rect x="10" y="10" width="880" height="280" rx="12" class="box"/>
+  <use href="#i-building" class="ic" x="24" y="22" width="15" height="20"/>
+  <text x="48" y="38" class="t13">AWS アカウント（例: fullstack-lab で作ったもの）</text>
+
+  <!-- root -->
+  <rect x="28" y="60" width="200" height="110" rx="10" class="box"/>
+  <use href="#i-crown" class="ic" x="38" y="70" width="18" height="16"/>
+  <text x="64" y="84" class="t13">root ユーザー</text>
+  <text x="38" y="110" class="t12">MFA（パスキー）あり</text>
+  <text x="38" y="130" class="t12 tm">請求とアカウントの設定</text>
+  <text x="38" y="148" class="t12 tm">のときだけ使う</text>
+
+  <!-- グループ -->
+  <rect x="258" y="60" width="330" height="210" rx="10" class="box z"/>
+  <text x="272" y="84" class="t13">グループ Administrators</text>
+  <use href="#i-shield-halved" class="ic z" x="272" y="96" width="14" height="14"/>
+  <text x="292" y="108" class="t12 tz">ポリシー AdministratorAccess</text>
+  <text x="272" y="128" class="t12 tm">グループに付けた許可は、入った人全員に効く</text>
+  <rect x="272" y="144" width="302" height="110" rx="8" class="box"/>
+  <use href="#i-key" class="ic" x="284" y="156" width="14" height="14"/>
+  <text x="306" y="168" class="t13">IAM ユーザー Administrator</text>
+  <text x="284" y="194" class="t12">MFA（パスキー）あり</text>
+  <text x="284" y="214" class="t12 tm">コンソールのログインも CLI も</text>
+  <text x="284" y="234" class="t12 tm">普段の作業はすべてこれ</text>
+
+  <!-- 予算 -->
+  <rect x="618" y="60" width="254" height="90" rx="10" class="box"/>
+  <text x="632" y="84" class="t13">予算アラート（Budgets）</text>
+  <text x="632" y="108" class="t12">月 10 ドルの月次コスト予算</text>
+  <text x="632" y="128" class="t12 tm">実績 85%・100%、予測 100% でメール</text>
+
+  <!-- 予定のロール -->
+  <rect x="618" y="170" width="254" height="100" rx="10" class="box ghost"/>
+  <use href="#i-id-badge" class="ic jwt" x="632" y="182" width="12" height="15"/>
+  <text x="652" y="195" class="t13">IAM ロール（予定）</text>
+  <text x="632" y="220" class="t12 tm">GitHub Actions が切り替えて使う</text>
+  <text x="632" y="240" class="t12 tm">フェーズ 3 で作る。04 で説明</text>
+</svg>
+</div>
+<figcaption>root ユーザーは MFA を付けて普段は使わず、人の作業は IAM ユーザーで、仕組み（GitHub Actions など）の作業は IAM ロールで行います。許可（ポリシー）は人に直接ではなくグループに付けると、人が増えてもグループに入れるだけで済みます。</figcaption>
+</figure>
+
+<details class="deep"><summary>手順の細かい点を開く <small>サインアップから IAM ユーザーで入り直すまで</small></summary>
+<ol class="steps">
+  <li><span class="num">1</span><span>サインアップでは、root ユーザーのメール、アカウント名（表示用の名前。あとから変えられる）、パスワード、プラン（Free / Paid）、連絡先、支払い方法、電話の確認、サポートプランを入れます。サポートプランは無料のベーシックで足ります。</span></li>
+  <li><span class="num">2</span><span>root ユーザーの MFA は、右上のメニューの「セキュリティ認証情報」で付けます。MFA の名前はあとから変えられないので、直したいときは新しく登録してから古いほうを消します。2 つ目を登録するには、MFA を使ってログインし直したセッションが要ります。</span></li>
+  <li><span class="num">3</span><span>予算アラートは「Billing and Cost Management」→「予算」で作ります。請求や IAM の画面は、リージョンに関係しない「グローバル」なサービスなので、右上のリージョンが選べなくなります。</span></li>
+  <li><span class="num">4</span><span>IAM ユーザーは、管理者の権限を付けても、最初は請求の画面を見られません。root ユーザーで「アカウント」の画面を開き、「IAM ユーザーおよびロールによる請求情報へのアクセス」を有効にします。</span></li>
+  <li><span class="num">5</span><span>IAM ユーザーを作ると、そのアカウント専用のサインイン URL（<code>https://&lt;アカウント ID&gt;.signin.aws.amazon.com/console</code>）が出ます。IAM ユーザーはこの URL から入ります。root ユーザーは、ログイン画面の「ルートユーザーの E メールを使用したサインイン」から入ります。</span></li>
+</ol>
+</details>
+
+<!-- ======================================================================= -->
+<h2 id="role"><span class="no">04</span>IAM ロールは何に使うか</h2>
+<p>アプリ（ECS のタスク）や GitHub Actions に AWS を操作させるときは、IAM ユーザーを作らず、IAM ロールを使います。「アプリにロールを付与すると、アプリがロールを持つので操作できる」と考えたくなりますが、ロールはアプリに渡してずっと持たせるものではありません。アプリや GitHub Actions は、操作するたびに AWS STS（一時的な認証情報を発行するサービス）からそのロールの期限つきの認証情報をもらい、ロールとして操作します。</p>
+<p>この「ロールの認証情報をもらって、ロールとして操作する」ことを、このページでは「ロールに切り替える」と書きます（AWS の用語では「ロールを引き受ける」、英語で assume role）。切り替えている間は、AWS からはロールとして見え、使えるのはロールの権限だけです。IAM ユーザーのアクセスキーには期限が無く、漏れると無効にするまで使われ続けますが、ロールなら期限つきの認証情報しか渡らないので、人以外の仕組みにはロールを使います。</p>
+<ol class="strip">
+  <li><b>ロールを作る</b>「誰が切り替えてよいか」（信頼ポリシー）と「何をしてよいか」（許可のポリシー）の 2 つを決める</li>
+  <li><b>切り替えを頼む</b>決められた相手が、自分が誰かを示して切り替えを頼む。受け付けるのは AWS STS（一時的な認証情報を発行するサービス）</li>
+  <li><b>期限つきの認証情報が返る</b>期限（GitHub Actions なら既定 1 時間）が来ると使えなくなる</li>
+  <li><b>許された操作だけをする</b>許可のポリシーに書いた操作だけができる</li>
+</ol>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 900 290" role="img" aria-label="IAM ロールに切り替えるもの。GitHub Actions、ECS のタスク、会社の社員が IAM ロールに切り替える。ロールには、誰が切り替えてよいかを決める信頼ポリシーと、何をしてよいかを決める許可のポリシーがある。切り替えると期限つきの認証情報が渡り、許可のポリシーに書いた操作だけができる" class="arch" style="min-width:640px">
+  <defs>
+    <marker id="arr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
+    <marker id="arr-r-jwt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-jwt"/></marker>
+  </defs>
+
+  <!-- 切り替えるもの -->
+  <rect x="10" y="20" width="200" height="64" rx="10" class="box"/>
+  <text x="110" y="46" text-anchor="middle" class="t13">GitHub Actions</text>
+  <text x="110" y="68" text-anchor="middle" class="t12 tm">イメージを ECR に push</text>
+  <rect x="10" y="113" width="200" height="64" rx="10" class="box"/>
+  <text x="110" y="139" text-anchor="middle" class="t13">ECS のタスク</text>
+  <text x="110" y="161" text-anchor="middle" class="t12 tm">動いているアプリ</text>
+  <rect x="10" y="206" width="200" height="64" rx="10" class="box"/>
+  <use href="#i-user" class="ic s" x="22" y="218" width="13" height="15"/>
+  <text x="115" y="232" text-anchor="middle" class="t13">会社の社員</text>
+  <text x="110" y="254" text-anchor="middle" class="t12 tm">アクセスポータルから</text>
+
+  <!-- ロール -->
+  <rect x="290" y="20" width="260" height="250" rx="10" class="box"/>
+  <use href="#i-id-badge" class="ic jwt" x="304" y="31" width="13" height="16"/>
+  <text x="326" y="45" class="t13">IAM ロール</text>
+  <rect x="304" y="62" width="232" height="84" rx="8" class="box"/>
+  <text x="318" y="86" class="t13">信頼ポリシー</text>
+  <text x="318" y="108" class="t12 tm">誰が切り替えてよいか</text>
+  <text x="318" y="128" class="t12 tm">例: このリポジトリの main だけ</text>
+  <rect x="304" y="160" width="232" height="96" rx="8" class="box z"/>
+  <use href="#i-shield-halved" class="ic z" x="318" y="172" width="14" height="14"/>
+  <text x="338" y="184" class="t13">許可のポリシー</text>
+  <text x="318" y="208" class="t12 tm">何をしてよいか</text>
+  <text x="318" y="228" class="t12 tm">例: ECR への push だけ</text>
+
+  <!-- リソース -->
+  <rect x="630" y="70" width="260" height="150" rx="10" class="box"/>
+  <text x="646" y="96" class="t13">AWS のリソース</text>
+  <text x="646" y="118" class="t12 tm">ECR、ECS、S3 など</text>
+  <text x="646" y="152" class="t12">許可のポリシーに書いた</text>
+  <text x="646" y="172" class="t12">操作だけができる</text>
+  <text x="646" y="200" class="t12 tm">期限が来ると使えなくなる</text>
+
+  <!-- 線 -->
+  <line x1="210" y1="52" x2="288" y2="100" class="ln" marker-end="url(#arr-r)"/>
+  <line x1="210" y1="145" x2="288" y2="145" class="ln" marker-end="url(#arr-r)"/>
+  <text x="249" y="137" text-anchor="middle" class="t12">切り替える</text>
+  <line x1="210" y1="238" x2="288" y2="190" class="ln" marker-end="url(#arr-r)"/>
+  <line x1="550" y1="145" x2="628" y2="145" class="ln jwt" marker-end="url(#arr-r-jwt)"/>
+  <text x="589" y="117" text-anchor="middle" class="t12 tj">期限つきの</text>
+  <text x="589" y="134" text-anchor="middle" class="t12 tj">認証情報</text>
+</svg>
+</div>
+<figcaption>ロールに切り替えるには、信頼ポリシーに書かれた相手である必要があり、切り替えたあとは許可のポリシーに書いた操作しかできません。渡るのは期限つきの認証情報（黄）だけなので、GitHub やアプリの中に長期のアクセスキーを置かずに済みます。</figcaption>
+</figure>
+
+<p>次の表は、何がロールに切り替えるかと、そのときに自分が誰かをどう示すかを並べたものです。fullstack-lab の列は、どのフェーズで出てくるかを示します。</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>ロールに切り替えるもの</th><th>何をするか（例）</th><th>自分が誰かの示し方</th><th>fullstack-lab では</th></tr></thead>
+<tbody>
+<tr><td class="k">GitHub Actions</td><td>イメージを ECR に push し、ECS を更新する</td><td>GitHub が発行する JWT（OIDC）を STS に渡す</td><td>フェーズ 3 で作る予定</td></tr>
+<tr><td class="k">ECS のタスク</td><td>ECR からイメージを取り込み、ログを送る。アプリが AWS のサービスを呼ぶ</td><td>ECS がタスクにロールを渡す（タスク実行ロール、タスクロール）</td><td>フェーズ 4 で作る予定</td></tr>
+<tr><td class="k">会社の社員</td><td>アクセスポータルから「開発 1」に開発者の権限で入る</td><td>会社の IdP（Okta など）でログインする</td><td>使わない（05 の一般的な形）</td></tr>
+</tbody></table></div>
+
+<p>次の表は、ロールについて思い込みやすい理解と、実際の仕組みの対応です。ECS のタスクのような AWS のサービスについては「ロールを付ける」で合っていますが（AWS のコンソールも「割り当てる」と書く）、GitHub Actions や IAM ユーザーに「付与する」、ロールを「持っている」は、仕組みとしては正確ではありません。</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>思い込みやすい理解</th><th>正しいか</th><th>実際の仕組み</th></tr></thead>
+<tbody>
+<tr><td class="k">ECS のタスクにロールを付ける</td><td><span class="ok">正しい</span></td><td>タスク定義にロールの ARN を書き、ロールの信頼ポリシーで「ECS のタスクは切り替えてよい」と許す。ECS が自動でロールに切り替え、認証情報の更新も自動で行う。AWS のコンソールでも「ロールを割り当てる」と書かれる</td></tr>
+<tr><td class="k">GitHub Actions にロールを付与する</td><td><span class="ng">不正確</span></td><td>GitHub には鍵も権限も渡さない。AWS 側のロールの信頼ポリシーに「このリポジトリの main は切り替えてよい」と書き、ワークフローは実行のたびに GitHub の JWT を見せてロールに切り替える</td></tr>
+<tr><td class="k">ロールを持っているから操作できる</td><td><span class="ng">不正確</span></td><td>ずっと持っているのではなく、操作するたびに期限つきの認証情報をもらう。期限が切れたら、もらい直す（ECS は自動、GitHub Actions は実行ごと）</td></tr>
+<tr><td class="k">IAM ユーザーにロールを付与する</td><td><span class="ng">間違い</span></td><td>そういう設定は無い。ロールの信頼ポリシーで「このユーザーは切り替えてよい」と許し、ユーザーが自分で切り替える（コンソールでは「スイッチロール」）</td></tr>
+<tr><td class="k">ロールを使うと、自分の権限にロールの権限が足される</td><td><span class="ng">間違い</span></td><td>切り替えている間は、ロールの権限だけで動く。自分（IAM ユーザー）の権限は使わない。同時に使えるロールは 1 つだけ</td></tr>
+</tbody></table></div>
+
+<p>切り替える前と後で、AWS から「誰として見えているか」が変わります。次は、IAM ユーザー <code>Administrator</code> が <code>ecr-push</code> というロール（例）に切り替えたときの、<code>aws sts get-caller-identity</code>（今の自分が誰かを表示するコマンド）の出力です。</p>
+<pre><code># 切り替える前
+aws sts get-caller-identity
+#   Arn: arn:aws:iam::&lt;ID&gt;:user/Administrator          ← IAM ユーザーとして見える
+
+# ecr-push に切り替えて、もらった認証情報で実行したあと
+aws sts get-caller-identity
+#   Arn: arn:aws:sts::&lt;ID&gt;:assumed-role/ecr-push/…     ← ロールとして見える</code></pre>
+<p>コンソールで「スイッチロール」したときも同じで、右上の表示がユーザー名からロール名に変わります。期限が切れると、その認証情報は使えなくなります。</p>
+
+<div class="callout"><p><strong>細かい流れは、作るときに。</strong>GitHub Actions が JWT を使ってロールに切り替える細かい流れ（OIDC）は、フェーズ 3 で実際に作るときに、別のページで説明します。</p></div>
+
+<!-- ======================================================================= -->
+<h2 id="company"><span class="no">05</span>会社ではアカウントを複数持つ</h2>
+<p>会社では、開発・検証・本番のように、環境ごとに AWS アカウントを分けることが多いです。アカウントが別なら、開発での操作ミスが本番に届かないためです。アカウントは Organizations でまとめ、社員は IAM Identity Center のアクセスポータルから各アカウントに入ります。</p>
+<ol class="strip">
+  <li><b>親のアカウントが子のアカウントを作る</b>Organizations の管理アカウント（親）から子のアカウントを作る。親には請求と管理だけを置く</li>
+  <li><b>メールは別名で足りる</b>アカウントごとに root 用のメールが要るが、<code>aws+dev1@…</code> のような別名で 1 つの受信箱に集める</li>
+  <li><b>社員はアクセスポータルにログインする</b>会社の IdP（Okta など）でログインすると、入れるアカウントと権限の一覧が出る</li>
+  <li><b>選んだアカウントにロールで入る</b>「開発 1 に開発者の権限で」を選ぶと、そのアカウントのロールに切り替えて入る。IAM ユーザーは作らない</li>
+</ol>
+
+<figure>
+<div class="fig-scroll">
+<svg viewBox="0 0 960 360" role="img" aria-label="会社での構成の例。社員はアクセスポータルに、会社の IdP（Okta など）でログインする。アクセスポータルから、Organizations がまとめる子のアカウント（開発 1、開発 2、検証、本番）を選び、ロールに切り替えて入る" class="arch" style="min-width:680px">
+  <defs>
+    <marker id="arr-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
+    <marker id="arr-o-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-s"/></marker>
+    <marker id="arr-o-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="mk mk-k"/></marker>
+  </defs>
+
+  <!-- 社員 -->
+  <rect x="10" y="160" width="130" height="70" rx="10" class="box"/>
+  <use href="#i-user" class="ic s" x="22" y="172" width="14" height="16"/>
+  <text x="82" y="186" text-anchor="middle" class="t13">社員</text>
+  <text x="75" y="212" text-anchor="middle" class="t12 tm">会社の ID で</text>
+
+  <!-- 窓口 -->
+  <rect x="180" y="30" width="180" height="70" rx="10" class="box k"/>
+  <text x="270" y="58" text-anchor="middle" class="t13">IdP ・ Okta など</text>
+  <text x="270" y="82" text-anchor="middle" class="t12 tm">会社のログイン</text>
+
+  <!-- 貸出カウンター -->
+  <rect x="180" y="140" width="180" height="120" rx="10" class="box s"/>
+  <use href="#i-door-open" class="ic s" x="190" y="150" width="18" height="16"/>
+  <text x="282" y="164" text-anchor="middle" class="t13">アクセスポータル</text>
+  <text x="270" y="186" text-anchor="middle" class="t12 tm">IAM Identity Center</text>
+  <text x="270" y="216" text-anchor="middle" class="t12">入れるアカウントと</text>
+  <text x="270" y="236" text-anchor="middle" class="t12">権限の一覧が出る</text>
+
+  <!-- 組織 -->
+  <rect x="400" y="10" width="550" height="340" rx="12" class="box ghost"/>
+  <use href="#i-sitemap" class="ic" x="414" y="22" width="18" height="16"/>
+  <text x="440" y="36" class="t13">Organizations</text>
+  <rect x="420" y="50" width="510" height="56" rx="8" class="box"/>
+  <use href="#i-building" class="ic" x="432" y="60" width="13" height="17"/>
+  <text x="454" y="74" class="t13">管理アカウント（親）</text>
+  <text x="454" y="96" class="t12 tm">請求をまとめ、子のアカウントを作る。リソースは置かない</text>
+
+  <line x1="675" y1="106" x2="675" y2="140" class="ln thin"/>
+  <line x1="479" y1="140" x2="869" y2="140" class="ln thin"/>
+  <line x1="479" y1="140" x2="479" y2="166" class="ln thin" marker-end="url(#arr-o)"/>
+  <line x1="609" y1="140" x2="609" y2="166" class="ln thin" marker-end="url(#arr-o)"/>
+  <line x1="739" y1="140" x2="739" y2="166" class="ln thin" marker-end="url(#arr-o)"/>
+  <line x1="869" y1="140" x2="869" y2="166" class="ln thin" marker-end="url(#arr-o)"/>
+
+  <rect x="420" y="168" width="118" height="112" rx="8" class="box"/>
+  <use href="#i-building" class="ic" x="430" y="178" width="12" height="16"/>
+  <text x="448" y="192" class="t13">開発 1</text>
+  <text x="430" y="218" class="t11 mono tm">aws+dev1@…</text>
+  <use href="#i-id-badge" class="ic jwt" x="430" y="240" width="10" height="13"/>
+  <text x="444" y="251" class="t12">開発者</text>
+  <text x="444" y="269" class="t12">閲覧</text>
+
+  <rect x="550" y="168" width="118" height="112" rx="8" class="box"/>
+  <use href="#i-building" class="ic" x="560" y="178" width="12" height="16"/>
+  <text x="578" y="192" class="t13">開発 2</text>
+  <text x="560" y="218" class="t11 mono tm">aws+dev2@…</text>
+  <use href="#i-id-badge" class="ic jwt" x="560" y="240" width="10" height="13"/>
+  <text x="574" y="251" class="t12">開発者</text>
+  <text x="574" y="269" class="t12">閲覧</text>
+
+  <rect x="680" y="168" width="118" height="112" rx="8" class="box"/>
+  <use href="#i-building" class="ic" x="690" y="178" width="12" height="16"/>
+  <text x="708" y="192" class="t13">検証</text>
+  <text x="690" y="218" class="t11 mono tm">aws+verify@…</text>
+  <use href="#i-id-badge" class="ic jwt" x="690" y="240" width="10" height="13"/>
+  <text x="704" y="251" class="t12">開発者</text>
+  <text x="704" y="269" class="t12">閲覧</text>
+
+  <rect x="810" y="168" width="118" height="112" rx="8" class="box"/>
+  <use href="#i-building" class="ic" x="820" y="178" width="12" height="16"/>
+  <text x="838" y="192" class="t13">本番</text>
+  <text x="820" y="218" class="t11 mono tm">aws+prod@…</text>
+  <use href="#i-id-badge" class="ic jwt" x="820" y="240" width="10" height="13"/>
+  <text x="834" y="251" class="t12">閲覧だけ</text>
+
+  <text x="420" y="306" class="t12 ts">社員は、選んだアカウントに、選んだ権限（ロール）で入る</text>
+  <text x="420" y="328" class="t12 tm">権限の種類（開発者・閲覧）は、Identity Center の「許可セット」で決める</text>
+
+  <!-- 線 -->
+  <line x1="140" y1="195" x2="178" y2="195" class="ln s" marker-end="url(#arr-o-s)"/>
+  <line x1="270" y1="102" x2="270" y2="138" class="ln k" marker-start="url(#arr-o-k)" marker-end="url(#arr-o-k)"/>
+  <text x="278" y="125" class="t12 tk">ログインは IdP で</text>
+  <line x1="360" y1="225" x2="418" y2="225" class="ln s" marker-end="url(#arr-o-s)"/>
+</svg>
+</div>
+<figcaption>社員はどのアカウントにも IAM ユーザーを持たず、アクセスポータルでロールに切り替えて入ります。ログインそのものは会社の IdP（橙）が受け持つので、Keycloak や Okta でアプリにログインするのと同じ仕組みで AWS にも入れます。</figcaption>
+</figure>
+
+<div class="tbl-wrap"><table>
+<thead><tr><th></th><th>個人（今の fullstack-lab）</th><th>会社（一般的な形）</th></tr></thead>
+<tbody>
+<tr><td class="k">アカウントの数</td><td>1 つ。環境は Terraform のコードの中で分ける</td><td>環境やシステムごとに複数。Organizations でまとめる</td></tr>
+<tr><td class="k">root 用のメール</td><td>自分のメール 1 つ</td><td>アカウントごとの別名（<code>aws+dev1@…</code>）。受信箱は共有の 1 つ</td></tr>
+<tr><td class="k">人の入り方</td><td>IAM ユーザー</td><td>アクセスポータルでロールに切り替える</td></tr>
+<tr><td class="k">仕組みの入り方</td><td colspan="2">どちらも IAM ロール（GitHub Actions、ECS のタスクなど）</td></tr>
+</tbody></table></div>
+
+<div class="callout"><p><strong>業務環境とのつながり。</strong>業務環境のアカウントの分け方と、社員が AWS にどう入っていたかは、まだ分かっていません。この節は一般的な形で、業務環境の事実ではありません。分かったら、fullstack-lab の <code>docs/architecture/</code> の「仮定」に足してから、ここも合わせます。</p></div>
+
+<div class="layer-head l3"><span class="tag">層 3</span><span class="name">設定と根拠</span><small>アカウントを作る・権限を考えるときに開く</small></div>
+
+<!-- ======================================================================= -->
+<h2 id="signup"><span class="no">06</span>新しいサインアップ形式との違い</h2>
+<p>2026 年から、AWS には「プロジェクト」を作る新しいサインアップ形式があり、従来の形式とかなり違います。</p>
+<details class="deep"><summary>比較表を開く <small>2026-11-02 時点の AWS のドキュメントから</small></summary>
+<div class="tbl-wrap"><table>
+<thead><tr><th>項目</th><th>新しい形式（Sign up for AWS (new)）</th><th>従来の形式（Sign up for AWS (advanced)）</th></tr></thead>
+<tbody>
+<tr><td class="k">ログイン</td><td>AWS Builder ID。root ユーザーは無い</td><td>root ユーザー（メールとパスワード）</td></tr>
+<tr><td class="k">アカウントの構造</td><td>裏で Organizations が自動で作られ、「プロジェクト」1 つが AWS アカウント 1 つ。管理アカウントは AWS が持つ</td><td>単独のアカウント 1 つ</td></tr>
+<tr><td class="k">禁止ルール</td><td>AWS が管理する SCP / RCP が最初から掛かり、変えられない</td><td>何も掛かっていない</td></tr>
+<tr><td class="k">リージョン</td><td>連絡先の国で 1 つに固定（日本はシドニー <code>ap-southeast-2</code>）</td><td>自分で選ぶ</td></tr>
+<tr><td class="k">IAM</td><td>OIDC / SAML のプロバイダを作れない。IAM ユーザーはコンソールに入れない</td><td>制限なし</td></tr>
+<tr><td class="k">費用の止め方</td><td>Paid プランで月の上限（spend limit）を決められ、超えると新しいリソースを作れなくなる</td><td>Budgets の通知だけ。止まらない</td></tr>
+<tr><td class="k">戻し方</td><td>Paid に上げて「高度な機能」を有効にすると従来に近くなる。元には戻せない</td><td>—</td></tr>
+</tbody></table></div>
+<p>fullstack-lab は従来の形式を使います。フェーズ 3 で GitHub Actions 用の OIDC プロバイダ（GitHub が発行した JWT を信頼するための登録。04 の表の 1 行目で使う）を作る必要があり、新しい形式ではそれが禁止されているためです。無料クレジットと Free プランは 1 人 1 アカウントまでで、作り直したアカウントは Paid プランです。</p>
+</details>
+
+<!-- ======================================================================= -->
+<h2 id="policy"><span class="no">07</span>権限の決まり方</h2>
+<p>ある操作をしてよいかは、ポリシーをいくつか重ねて決まります。</p>
+<details class="deep"><summary>判定の順番を開く <small>IAM ポリシー、SCP、RCP、root ユーザーの例外</small></summary>
+<ol class="steps">
+  <li><span class="num">1</span><span>どこかに「拒否（Deny）」と書いてあれば、拒否です。許可がいくつあっても、拒否が勝ちます。</span></li>
+  <li><span class="num">2</span><span>Organizations の禁止ルール（SCP。人や仕組みが<b>できること</b>の上限）と、リソース側の禁止ルール（RCP。リソースに<b>誰が触れるか</b>の上限）が許していなければ、拒否です。単独のアカウントには、どちらも掛かっていません。</span></li>
+  <li><span class="num">3</span><span>IAM ユーザー・ロールに付けたポリシー（グループ経由を含む）か、リソースに付けたポリシーに「許可（Allow）」と書いてあれば、許可です。</span></li>
+  <li><span class="num">4</span><span>どこにも書いていなければ、拒否です（既定は拒否）。</span></li>
+</ol>
+<div class="tbl-wrap"><table>
+<thead><tr><th>だれ</th><th>IAM ポリシーで縛れるか</th><th>SCP で縛れるか</th></tr></thead>
+<tbody>
+<tr><td class="k">root ユーザー</td><td><span class="ng">縛れない</span></td><td>組織の子のアカウントなら縛れる。単独のアカウントや管理アカウントでは縛れない</td></tr>
+<tr><td class="k">IAM ユーザー</td><td><span class="ok">縛れる</span></td><td>組織の子のアカウントなら縛れる</td></tr>
+<tr><td class="k">IAM ロール</td><td><span class="ok">縛れる</span>（許可のポリシーと、切り替えてよい相手を決める信頼ポリシーの 2 つ）</td><td>組織の子のアカウントなら縛れる</td></tr>
+</tbody></table></div>
+<p>fullstack-lab の認可 API と同じく、「書いていなければ拒否」が基本です。新しいサインアップ形式で OIDC プロバイダを作れなかったのは、2 の SCP に拒否が書いてあったためで、自分の IAM ポリシーでは解除できません。</p>
+</details>
+
+<!-- ======================================================================= -->
+<h2 id="faq"><span class="no">08</span>よくある誤解</h2>
+<p>初めてアカウントを作ったときにつまずきやすい点です。</p>
+<details class="deep"><summary>8 つの誤解を開く</summary>
+<ul class="qa">
+  <li><b>「アカウント = ログイン ID？」</b>違います。AWS のアカウントは、リソースと請求の入れ物です。ログインするのは、その中の root ユーザー、IAM ユーザー、または切り替えた先のロールです。</li>
+  <li><b>「IAM ユーザーにロールを付ける？」</b>付けません。Keycloak のロールはユーザーに付けるラベルですが、IAM ロールはユーザーとは別の ID です。IAM ユーザーがロールを使うときは、一時的にそのロールに切り替え（コンソールでは「スイッチロール」）、その間はロールの権限だけで動きます。切り替えるには、ロールの信頼ポリシーとユーザー側のポリシー（<code>sts:AssumeRole</code>）の両方で許されている必要があります。ECS のタスクや Lambda には「ロールを付ける」と言い、その場合は AWS が自動でそのロールに切り替えて動かします。</li>
+  <li><b>「アカウント名に root と入っているから、root で入っている？」</b>違います。アカウント名は表示用の名前です。誰として入っているかは、右上の 2 行目を見ます。root ユーザーで入っているときは 2 行目が出ません。</li>
+  <li><b>「AdministratorAccess を付ければ、請求も見られる？」</b>最初は見られません。root ユーザーで「IAM ユーザーおよびロールによる請求情報へのアクセス」を有効にして、初めて見られます。</li>
+  <li><b>「アカウントはプロジェクトごとに作るもの？」</b>決まりはありません。個人の学習なら 1 つで足ります。会社では環境やシステムごとに分けることが多く（05）、新しいサインアップ形式では「プロジェクト = アカウント」です。</li>
+  <li><b>「アカウントを増やすたびにメールボックスを作る？」</b>作らずに済みます。<code>aws+dev1@…</code> のような <code>+</code> の別名は、対応しているメール（Gmail、Microsoft 365 など）なら、事前の作成なしに元の受信箱へ届きます。</li>
+  <li><b>「アカウント ID は秘密？」</b>AWS は、アカウント ID を秘密情報としては扱っていません。ただし出す必要もないので、fullstack-lab ではリポジトリに書かず、Terraform や CI が実行時に取ります。</li>
+  <li><b>「Organizations は個人でも使うべき？」</b>必須ではありません。使うと、管理アカウントにはリソースを置かないのが AWS の勧める形です。なお、Free プランのアカウントは、Organizations に入ると Paid プランに変わります。</li>
+</ul>
+</details>
+
+<!-- ======================================================================= -->
+<h2 id="read"><span class="no">09</span>確かめ方と読む場所</h2>
+<details class="deep"><summary>コマンドと、元になった文書を開く</summary>
+<div class="two">
+<div>
+<h3>今どのアカウントに、誰として入っているか</h3>
+<pre><code># CLI（フェーズ 3 で入れる予定。aws login でログイン）
+aws sts get-caller-identity
+# Account: 12 桁のアカウント ID（どのアカウントか）
+# Arn:     誰として入っているか
+#   arn:aws:iam::&lt;ID&gt;:user/Administrator  … IAM ユーザー
+#   arn:aws:iam::&lt;ID&gt;:root                … root ユーザー
+#   arn:aws:sts::&lt;ID&gt;:assumed-role/&lt;ロール名&gt;/… … 切り替えた先のロール</code></pre>
+<p>コンソールでは、右上の 2 行（02 の囲み）が同じことを表します。</p>
+</div>
+<div>
+<h3>元になった文書</h3>
+<ul class="plain files">
+  <li>fullstack-lab の <code>docs/roadmap/README.md</code>: フェーズ 3（OIDC、IAM ロール、ECR）と費用の見込み</li>
+  <li><a href="https://docs.aws.amazon.com/accounts/latest/reference/sign-up-for-aws.html">Compare sign-up options</a>: 新しいサインアップ形式との違い</li>
+  <li><a href="https://docs.aws.amazon.com/accounts/latest/reference/scps-and-rcps-for-projects.html">Managed policies for your organization</a>: 新しい形式に掛かる SCP / RCP</li>
+  <li><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html">AWS account root user</a>: root ユーザーの扱い</li>
+  <li><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html">Policy evaluation logic</a>: 07 の判定の順番</li>
+  <li><a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html">What is IAM Identity Center?</a>: アクセスポータルと許可セット</li>
+</ul>
+</div>
+</div>
+</details>
+
+<footer>このページは一般的な仕組みの説明で、fullstack-lab の設定が変わっても変わりません。例として挙げた名前と値（IAM ユーザー名、グループ名、予算額）は 2026-11-03 時点で <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a> の AWS フェーズのために作ったもので、06 の比較は 2026-11-02 時点の AWS のドキュメントから読み取ったものです。04 の GitHub Actions と ECS のロールはフェーズ 3 と 4 で作る予定で、作ったら値を合わせて直します。</footer>
+</div>
+
+</body>
+</html>
