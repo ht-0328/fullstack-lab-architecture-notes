@@ -11,7 +11,7 @@ fullstack-lab の中に置かないのは、あちらの `docs/` が AI コー�
 | [basics/login-basics.html](basics/login-basics.html) | 最初に読むページ。ログインの仕組みの基礎。Cookie、Nginx、oauth2-proxy、Keycloak、JWT の役割と、ログインの流れ。01 と 02 だけビルに入るときの例え（札、受付、確認係、窓口、身分証）を添える | 一般的な仕組みの説明（設定に依存しない）。例の値は認証・認可のページと合わせる |
 | [basics/aws-account-basics.html](basics/aws-account-basics.html) | AWS フェーズの前に読むページ。AWS アカウントの基礎。アカウント（ビル）、root ユーザー（オーナー）、IAM ユーザー（合鍵）、IAM ロール（入館証）、ポリシー（許可の紙）、会社での分け方（Organizations とアクセスポータル）、新しいサインアップ形式との違い | 一般的な仕組みの説明（設定に依存しない）。例の名前と値は 2026-11-03 時点で fullstack-lab の AWS フェーズのために作ったもの |
 | [auth/authentication-authorization.html](auth/authentication-authorization.html) | 認証・認可の仕組み。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更 | 2026-10-30（fullstack-lab の設計書 0005 の実装後） |
-| [aws/aws-architecture.html](aws/aws-architecture.html) | AWS 構成（予定）。ALB の認証（ホストごとのリスナールール）、ECS on Fargate、RDS、IdP（Keycloak / Okta）、CI/CD（IAM ロール、ECR、CodeBuild、CodeArtifact）、ローカルとの対応、未決の点 | 2026-10-31（fullstack-lab の docs/architecture.md と docs/aws-roadmap.md から） |
+| [aws/aws-architecture.html](aws/aws-architecture.html) | AWS 構成（予定）。ALB の認証（ホストごとのリスナールール）、ECS on Fargate、RDS、IdP（Keycloak / Okta）、CI/CD（IAM ロール、ECR、CodeBuild、CodeArtifact）、ローカルとの対応、決まったこと | 2026-11-04（fullstack-lab の docs/architecture/README.md と docs/roadmap/README.md から） |
 
 ## 見方
 
