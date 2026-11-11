@@ -846,13 +846,13 @@ curl -si localhost:8080/                       # Cookie 無し → 302 /oauth2/s
   <li><code>web/bff/.../auth/SecurityConfig.kt</code>、<code>CurrentUser.kt</code>、<code>application.yml</code>: 門 2</li>
   <li><code>authz/src/main/resources/application.yml</code>、<code>Policy.kt</code>: 門 3</li>
   <li><code>auth/.../keycloak/KeycloakAdminClient.kt</code>: Admin API の呼び方</li>
-  <li><code>docs/architecture.md</code>「認証と認可」、<code>docs/design/0002</code>、<code>0005</code>: 文章での説明と判断の理由</li>
+  <li><code>docs/architecture.md</code>「認証と認可」、<code>docs/design/shared/</code>（入口、前段、IdP）、<code>docs/design/web/</code>（JWT の検証、認可 API への問い合わせ）、<code>docs/design/authz/</code>、<code>docs/design/auth/</code>: 文章での説明</li>
 </ul>
 </div>
 </div>
 </details>
 
-<footer>この図は 2026-10-30 時点の <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a>（設計書 0005 の実装後）の設定から読み取ったものです。正は fullstack-lab の設計書（docs/design/0002、0005）と各設定ファイルで、認証・認可に関わる設定を変えたときは、この図も合わせて直します。</footer>
+<footer>この図は 2026-10-30 時点の <a href="https://github.com/ht-0328/fullstack-lab">fullstack-lab</a>（認証 API と会員登録の実装後）の設定から読み取ったものです。正は fullstack-lab の設計の文書（docs/design/ の shared、web、authz、auth）と各設定ファイルで、認証・認可に関わる設定を変えたときは、この図も合わせて直します。</footer>
 </div>
 
 <script>

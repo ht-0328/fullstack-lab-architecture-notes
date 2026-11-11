@@ -20,7 +20,7 @@ description: >-
 1. [README.md の「ページの書き方」](../../../README.md#ページの書き方)。決まりの正典です。ここに書いてあることをこのファイルに写さず、必要ならあちらを直します。
 2. [assets/notes.css](../../../assets/notes.css)。共通の見た目と部品（`howto` `layer-head` `glossary` `strip` `details.deep` `legend` `cards` `callout` `ol.steps`、SVG のクラス）。
 3. 型になるページ [auth/authentication-authorization.html](../../../auth/authentication-authorization.html)。新しいページはこれと同じ順序・同じ部品で作ります。
-4. 正となる文書。ページは fullstack-lab の設計書（`docs/design/`）と設定ファイルから読み取ったものなので、書く前にそちらを読み、食い違いがあればそちらに合わせます。サブモジュールとして checkout されていれば `../../docs/design/`（fullstack-lab のルート）にあり、単独で clone しているときは https://github.com/ht-0328/fullstack-lab を見ます。
+4. 正となる文書。ページは fullstack-lab の設計の文書（`docs/design/`）と設定ファイルから読み取ったものなので、書く前にそちらを読み、食い違いがあればそちらに合わせます。サブモジュールとして checkout されていれば `../../docs/design/`（fullstack-lab のルート）にあり、単独で clone しているときは https://github.com/ht-0328/fullstack-lab を見ます。
 
 ## 3. 新しいページを作る
 
@@ -64,7 +64,7 @@ description: >-
    .agents/skills/writing-architecture-notes/scripts/screenshot.sh . auth/authentication-authorization.html /tmp/shots
    ```
 3. `file://` で直接開いても壊れないこと（外部ファイルは `notes.css` と Google Fonts だけ。`<use>` は同じ HTML 内の `<symbol>` を指す）。
-4. 本文の事実が fullstack-lab の設計書・設定と一致していること。仮定や未決は「仮定」「未決」と書く。
+4. 本文の事実が fullstack-lab の設計の文書・設定と一致していること。仮定や未決は「仮定」「未決」と書く。
 
 ## 7. 取り込み
 
