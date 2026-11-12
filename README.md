@@ -2,7 +2,7 @@
 
 仕組みを理解するための図解と解説を置くリポジトリです。題材は学習用のタスク管理アプリ [fullstack-lab](https://github.com/ht-0328/fullstack-lab) で、そこで実際に動いている設定から読み取った構成を、人が読むための HTML にしています。
 
-fullstack-lab の中に置かないのは、あちらの `docs/` が AI コーディングエージェントも読む設計書と設定の置き場で、人が見るための HTML を混ぜたくないためです。fullstack-lab からは、`references/engineering-docs-standard` と同じように git submodule（`references/architecture-notes`）として参照します。
+fullstack-lab の中に置かないのは、あちらの `docs/` が AI コーディングエージェントも読む設計の文書と設定の置き場で、人が見るための HTML を混ぜたくないためです。fullstack-lab からは、`references/engineering-docs-standard` と同じように git submodule（`references/architecture-notes`）として参照します。
 
 ## ページ
 
@@ -10,7 +10,7 @@ fullstack-lab の中に置かないのは、あちらの `docs/` が AI コー�
 |---|---|---|
 | [basics/login-basics.html](basics/login-basics.html) | 最初に読むページ。ログインの仕組みの基礎。Cookie、Nginx、oauth2-proxy、Keycloak、JWT の役割と、ログインの流れ。01 と 02 だけビルに入るときの例え（札、受付、確認係、窓口、身分証）を添える | 一般的な仕組みの説明（設定に依存しない）。例の値は認証・認可のページと合わせる |
 | [basics/aws-account-basics.html](basics/aws-account-basics.html) | AWS フェーズの前に読むページ。AWS アカウントの基礎。アカウント（ビル）、root ユーザー（オーナー）、IAM ユーザー（合鍵）、IAM ロール（入館証）、ポリシー（許可の紙）、会社での分け方（Organizations とアクセスポータル）、新しいサインアップ形式との違い | 一般的な仕組みの説明（設定に依存しない）。例の名前と値は 2026-11-03 時点で fullstack-lab の AWS フェーズのために作ったもの |
-| [auth/authentication-authorization.html](auth/authentication-authorization.html) | 認証・認可の仕組み。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更 | 2026-10-30（fullstack-lab の設計書 0005 の実装後） |
+| [auth/authentication-authorization.html](auth/authentication-authorization.html) | 認証・認可の仕組み。Keycloak の 2 つの realm、Nginx と oauth2-proxy による前段認証、BFF での JWT の検証、認可 API の判定、認証 API による会員登録とパスワード変更 | 2026-10-30（fullstack-lab の設計の文書 0005 の実装後） |
 | [aws/aws-architecture.html](aws/aws-architecture.html) | AWS 構成（予定）。ALB の認証（ホストごとのリスナールール）、ECS on Fargate、RDS、IdP（Keycloak / Okta）、CI/CD（IAM ロール、ECR、CodeBuild、CodeArtifact）、ローカルとの対応、決まったこと | 2026-11-04（fullstack-lab の docs/architecture/README.md と docs/roadmap/README.md から） |
 
 ## 見方
@@ -80,12 +80,12 @@ GitHub Pages で公開しています: https://ht-0328.github.io/fullstack-lab-a
 ### 7. 事実と時点
 
 - 各ページは fullstack-lab のその時点の設定から読み取ったものです。「読み取った時点」をフッター、この README の表、`index.html` に書き、設定を変えたら更新します。
-- 正は fullstack-lab 側の設計書と設定ファイルです。食い違ったときはそちらに合わせます。未決や仮定は「未決」「仮定」と書き、事実のようには書きません。
+- 正は fullstack-lab 側の設計の文書と設定ファイルです。食い違ったときはそちらに合わせます。未決や仮定は「未決」「仮定」と書き、事実のようには書きません。
 
 ## 更新のきまり
 
 - 各ページは、その時点の fullstack-lab の設定（Nginx、compose、Keycloak の realm、BFF、認可 API、認証 API）から読み取ったものです。設定を変えたら、該当するページも直します。`basics/` の基礎ページだけは一般的な仕組みの説明で、設定が変わっても中身は変わりません（例として挙げる名前と値だけ合わせます）。
-- 正は fullstack-lab 側の設計書（`docs/design/`）と設定ファイルです。食い違ったときはそちらに合わせます。
+- 正は fullstack-lab 側の設計の文書（`docs/design/`）と設定ファイルです。食い違ったときはそちらに合わせます。
 - 図は外部のライブラリに頼らず、HTML の中に SVG で書いています。直すときはその SVG を直接編集します。見た目は `assets/notes.css` に集めてあります（「ページの書き方」）。
 - AWS のサービスとグループ枠のアイコンは [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)（2026-07-31 版のパッケージ、2026-10-31 に取得）から、使うものだけを `assets/aws-icons/` に改変せず置き、SVG の `<image href>` で参照しています。利用条件は配布ページの記載に従います。AWS のページでは、Keycloak、Okta、GitHub など AWS 以外のものは枠だけで描きます。
 - 認証・認可のページでは、仕組みの部品（利用者、Cookie、鍵、錠前、JWT、判定、データ）を [Font Awesome Free](https://fontawesome.com/) 6.7.2（アイコンは CC BY 4.0）から、製品のロゴ（Keycloak、NGINX、Nuxt）を [Simple Icons](https://simpleicons.org/) 16.36.0（CC0 1.0）から取っています。色を CSS で経路ごとに変えるため、ファイルは置かず、SVG のパスを HTML の `<body>` 先頭の `<symbol>` に取り込んで `<use>` で参照します。使ったアイコンの一覧と出典はその `<symbol>` の直前のコメントにあり、同じ意味には同じアイコンを使います（凡例は「登場人物と役割」の節）。ロゴの扱いは各ブランドのガイドラインに従います。
